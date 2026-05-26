@@ -1,0 +1,48 @@
+{
+  "name": "typesnapshot",
+  "version": "0.1.0",
+  "description": "Snapshot testing for your TypeScript public API surface. Catch accidental type-breaking changes in CI, the way Jest snapshots catch accidental value changes.",
+  "keywords": [
+    "typescript",
+    "types",
+    "snapshot",
+    "api",
+    "breaking-changes",
+    "semver",
+    "ci",
+    "public-api",
+    "type-testing"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "type-snapshot": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test --experimental-strip-types test/*.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.7 <6"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
+  }
+}
