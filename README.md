@@ -62,15 +62,27 @@ if (result.breaking.length > 0) {
 - **typescript-breaking-change-detector** — AST-based, so it false-positives on alias renames. typesnapshot uses the TypeScript **type checker**, which resolves aliases: structurally identical types produce identical signatures.
 - **@microsoft/api-extractor** — powerful but heavy and monorepo-oriented, with a substantial setup. typesnapshot is `npx typesnapshot` with zero config.
 
+## What it tracks
+
+Every exported symbol gets a fully resolved structural signature:
+
+- **Type aliases** — expanded to their resolved shape (`Record<string, string>` → `{ [key: string]: string }`)
+- **Interfaces** — all declared members, sorted by name
+- **Classes** — instance members (methods and properties), sorted by name; static members and constructor signature are not yet tracked (see roadmap)
+- **Functions** — parameter and return types
+- **Enums and namespaces** — member names and values
+
+Works with `.ts` source files and hand-authored `.d.ts` declaration files (the pattern used by JS libraries that ship a separate type file).
+
 ## How it works
 
 The make-or-break property is **determinism**: two runs over unchanged source must produce byte-identical output, and a TypeScript version bump must not cause spurious diffs.
 
-To get there, typesnapshot normalizes at the type-object level (not on rendered strings): union and intersection members are sorted and de-duplicated recursively, object properties are sorted by name, type aliases are resolved, and re-exported (aliased) symbols are followed to their real declaration. User-defined object types are expanded structurally; builtins and `node_modules` types stay as named leaves so the whole world isn't inlined.
+To get there, typesnapshot normalizes at the type-object level (not on rendered strings): union and intersection members are sorted and de-duplicated recursively, object properties are sorted by name, type aliases are resolved, and re-exported (aliased) symbols are followed to their real declaration. User-defined types are expanded structurally; builtins and `node_modules` types stay as named leaves so the whole world isn't inlined.
 
 ## Known limitations (MVP)
 
-This is an early MVP. The following are out of scope for now: variance analysis at the parameter level (contravariant inputs vs covariant outputs), a `--check-semver` flag that validates against your `package.json` version bump, multi-entry-point / monorepo support, and a GitHub Action wrapper.
+This is an early MVP. The following are out of scope for now: class static members and constructor signatures, variance analysis at the parameter level (contravariant inputs vs covariant outputs), a `--check-semver` flag that validates against your `package.json` version bump, multi-entry-point / monorepo support, and a GitHub Action wrapper.
 
 ## License
 
