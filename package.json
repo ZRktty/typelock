@@ -49,10 +49,10 @@
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "typescript": ">=4.7 <6"
+    "typescript": ">=4.7"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "typescript": "^6.0.3"
   }
 }
