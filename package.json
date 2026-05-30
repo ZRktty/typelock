@@ -17,7 +17,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ZRktty/typesnapshot.git"
+    "url": "git+https://github.com/ZRktty/typesnapshot.git"
   },
   "homepage": "https://github.com/ZRktty/typesnapshot#readme",
   "bugs": {
@@ -33,7 +33,7 @@
     }
   },
   "bin": {
-    "typesnapshot": "./dist/cli.js"
+    "typesnapshot": "dist/cli.js"
   },
   "files": [
     "dist",
@@ -44,6 +44,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "postbuild": "chmod +x dist/cli.js",
     "test": "node --test --experimental-strip-types test/*.test.ts",
     "prepublishOnly": "npm run build"
   },
