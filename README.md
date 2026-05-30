@@ -26,7 +26,7 @@ npm install --save-dev typesnapshot
 ## Usage
 
 ```bash
-# 1. Create the baseline (commit api.typesnap to your repo)
+# 1. Create the baseline (commit api.typesnapshot to your repo)
 npx typesnapshot --update
 
 # 2. In CI, check the current types against the baseline

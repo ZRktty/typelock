@@ -13,10 +13,18 @@
     "public-api",
     "type-testing"
   ],
+  "author": "Zoltan Rakottyai (https://github.com/ZRktty)",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZRktty/typesnapshot.git"
+  },
+  "homepage": "https://github.com/ZRktty/typesnapshot#readme",
+  "bugs": {
+    "url": "https://github.com/ZRktty/typesnapshot/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -28,7 +36,8 @@
     "typesnapshot": "./dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "tutorial.md"
   ],
   "engines": {
     "node": ">=18"
