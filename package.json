@@ -4,14 +4,17 @@
   "description": "Snapshot testing for your TypeScript public API surface. Catch accidental type-breaking changes in CI, the way Jest snapshots catch accidental value changes.",
   "keywords": [
     "typescript",
-    "types",
-    "snapshot",
-    "api",
+    "snapshot-testing",
+    "api-surface",
     "breaking-changes",
     "semver",
-    "ci",
+    "type-checking",
+    "developer-tools",
+    "testing",
+    "type-safety",
+    "cli",
     "public-api",
-    "type-testing"
+    "ci"
   ],
   "author": "Zoltan Rakottyai (https://github.com/ZRktty)",
   "license": "MIT",
