@@ -2,6 +2,14 @@
 
 All notable changes to typesnapshot are documented here.
 
+## [0.1.3] — 2026-05-30
+
+### Fixed
+
+- **Constructor signatures now captured in class snapshots.** Previously, adding, removing, or changing constructor parameters passed silently. Classes with explicit constructors now include a `new(param: T, ...)` entry in their snapshot, sorted alphabetically alongside instance members. Classes with no explicit constructor (only the implicit default) emit no `new(...)` entry. This means adding a required constructor parameter, removing one, or changing parameter types are all detected as breaking changes.
+
+---
+
 ## [0.1.2] — 2026-05-30
 
 ### Fixed

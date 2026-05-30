@@ -1,6 +1,6 @@
 {
   "name": "typesnapshot",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Snapshot testing for your TypeScript public API surface. Catch accidental type-breaking changes in CI, the way Jest snapshots catch accidental value changes.",
   "keywords": [
     "typescript",
