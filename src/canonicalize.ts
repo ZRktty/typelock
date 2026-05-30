@@ -93,11 +93,58 @@ function shouldExpandObject(type: ts.Type, checker: ts.TypeChecker): boolean {
   return !isExternalFile(decl.getSourceFile());
 }
 
+/**
+ * Produce the canonical snapshot string for a class export.
+ *
+ * Combines the sorted instance members (same as canonicalizeObject) with the
+ * class's explicit constructor signatures rendered as `new(param: T, ...)`.
+ * Classes with no explicit constructor (only the implicit default) omit the
+ * `new(...)` entry — it carries no information and would be pure noise.
+ */
+export function canonicalizeClassType(
+  instanceType: ts.Type,
+  constructorType: ts.Type,
+  checker: ts.TypeChecker,
+  depth = 0,
+): string {
+  const ctorSigs = renderConstructorSigs(constructorType, checker, depth);
+  return canonicalizeObject(instanceType, checker, depth, ctorSigs);
+}
+
+function renderConstructorSigs(
+  constructorType: ts.Type,
+  checker: ts.TypeChecker,
+  depth: number,
+): string[] {
+  const sigs = constructorType
+    .getConstructSignatures()
+    .filter((sig) => sig.declaration?.kind === ts.SyntaxKind.Constructor);
+
+  return sigs.map((sig) => {
+    const params = sig.getParameters().map((param) => {
+      const decl = param.valueDeclaration ?? param.declarations?.[0];
+      const paramType = decl
+        ? checker.getTypeOfSymbolAtLocation(param, decl)
+        : checker.getDeclaredTypeOfSymbol(param);
+      const isOptional = !!(param.flags & ts.SymbolFlags.Optional);
+      const isRest = !!decl && ts.isParameter(decl) && !!decl.dotDotDotToken;
+      const optional = isOptional ? "?" : "";
+      const rest = isRest ? "..." : "";
+      const typeStr = isOptional
+        ? canonicalizeOptionalPropType(paramType, checker, depth + 1)
+        : canonicalizeType(paramType, checker, depth + 1);
+      return `${rest}${param.getName()}${optional}: ${typeStr}`;
+    });
+    return `new(${params.join(", ")})`;
+  });
+}
+
 /** Render an anonymous object type with alphabetically sorted members. */
 function canonicalizeObject(
   type: ts.Type,
   checker: ts.TypeChecker,
   depth: number,
+  extra: string[] = [],
 ): string {
   // Exclude properties declared in external files (lib.d.ts built-ins, node_modules)
   // so class instance types don't pollute with inherited toString/valueOf/etc.
@@ -124,7 +171,7 @@ function canonicalizeObject(
 
   // Index signatures, if present, are appended after named members.
   const indexSigs = renderIndexSignatures(type, checker, depth);
-  const all = [...rendered, ...indexSigs].sort();
+  const all = [...rendered, ...indexSigs, ...extra].sort();
 
   return all.length === 0 ? "{}" : `{ ${all.join("; ")} }`;
 }

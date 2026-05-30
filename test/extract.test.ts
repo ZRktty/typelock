@@ -129,6 +129,29 @@ test("interface member addition is detected as a change", () => {
   assert.ok(pos, "Position should appear in changed");
 });
 
+test("constructor signature is captured in class snapshot", () => {
+  const snap = extract({ entry: fx("dts-lib.d.ts") });
+  const proc = snap.exports.find((e) => e.name === "Processor");
+  assert.ok(proc, "Processor should be extracted");
+  assert.ok(
+    proc.signature.includes("new("),
+    `Constructor must appear in snapshot, got: ${proc.signature}`,
+  );
+  assert.ok(
+    proc.signature.includes("options"),
+    `Constructor param must be named, got: ${proc.signature}`,
+  );
+});
+
+test("constructor signature change is detected as breaking", () => {
+  const before = extract({ entry: fx("dts-lib.d.ts") });
+  const after = extract({ entry: fx("dts-lib-changed.d.ts") });
+  const result = diff(before, after);
+  const proc = result.changed.find((c) => c.name === "Processor");
+  assert.ok(proc, "Processor should appear in changed");
+  assert.equal(proc.breaking, true, "adding a required constructor param is breaking");
+});
+
 test(".typesnap round-trips through serialize/parse", () => {
   const snap = extract({ entry: fx("foldlib.ts") });
   const reparsed = parse(serialize(snap));
