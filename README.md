@@ -15,7 +15,7 @@ export interface FoldOptions {
 
 `typesnapshot` extracts a canonical signature of your public exports, commits it as a diffable baseline, and fails CI when the surface changes unexpectedly.
 
-**New here?** See the [step-by-step tutorial](tutorial.md) for a full workflow walkthrough, CI setup, and a decision flowchart.
+**New here?** See the [step-by-step tutorial](tutorial.md) for a full workflow walkthrough, CI setup, and a decision flowchart. For what's coming next, see the [roadmap](ROADMAP.md).
 
 ## Install
 

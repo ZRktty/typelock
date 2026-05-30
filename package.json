@@ -40,7 +40,8 @@
   },
   "files": [
     "dist",
-    "tutorial.md"
+    "tutorial.md",
+    "ROADMAP.md"
   ],
   "engines": {
     "node": ">=18"
