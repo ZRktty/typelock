@@ -68,7 +68,7 @@ Every exported symbol gets a fully resolved structural signature:
 
 - **Type aliases** — expanded to their resolved shape (`Record<string, string>` → `{ [key: string]: string }`)
 - **Interfaces** — all declared members, sorted by name
-- **Classes** — public instance members (methods and properties), sorted by name
+- **Classes** — instance members (methods and properties), sorted by name; static members and constructor signature are not yet tracked (see roadmap)
 - **Functions** — parameter and return types
 - **Enums and namespaces** — member names and values
 

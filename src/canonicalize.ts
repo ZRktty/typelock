@@ -90,9 +90,7 @@ function shouldExpandObject(type: ts.Type, checker: ts.TypeChecker): boolean {
   const sym = type.getSymbol() ?? type.aliasSymbol;
   const decl = sym?.declarations?.[0];
   if (!decl) return false;
-  const file = decl.getSourceFile();
-  if (file.fileName.includes("node_modules")) return false;
-  return true;
+  return !isExternalFile(decl.getSourceFile());
 }
 
 /** Render an anonymous object type with alphabetically sorted members. */
@@ -101,12 +99,12 @@ function canonicalizeObject(
   checker: ts.TypeChecker,
   depth: number,
 ): string {
-  // Exclude properties declared in node_modules (lib.d.ts built-ins, inherited
-  // Object methods, etc.) so class instance types don't pollute with toString/valueOf.
+  // Exclude properties declared in external files (lib.d.ts built-ins, node_modules)
+  // so class instance types don't pollute with inherited toString/valueOf/etc.
   const props = checker.getPropertiesOfType(type).filter((prop) => {
     const d = prop.valueDeclaration ?? prop.declarations?.[0];
     if (!d) return true;
-    return !d.getSourceFile().fileName.includes("node_modules");
+    return !isExternalFile(d.getSourceFile());
   });
   const rendered = props
     .map((prop) => {
@@ -206,4 +204,15 @@ function dedupeSorted(sorted: string[]): string[] {
 /** Collapse runs of whitespace so formatting never affects the signature. */
 function normalizeWhitespace(s: string): string {
   return s.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * True for files that should never be expanded: TypeScript built-in lib files
+ * and anything from node_modules. Uses hasNoDefaultLib (set via the
+ * `/// <reference no-default-lib="true"/>` pragma present in every lib.*.d.ts)
+ * rather than path matching, so it works with global tsc, Yarn PnP, pnpm
+ * custom stores, and other non-standard TypeScript installation layouts.
+ */
+function isExternalFile(file: ts.SourceFile): boolean {
+  return file.hasNoDefaultLib || file.fileName.includes("node_modules");
 }
