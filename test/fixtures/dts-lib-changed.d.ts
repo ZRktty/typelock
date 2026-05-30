@@ -5,6 +5,7 @@ export interface Position {
 }
 export type Config = Record<string, string>;
 export declare class Processor {
+  constructor(options: string, strict: boolean);
   process(input: string): string | null;
   count(): number;
 }

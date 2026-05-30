@@ -1,6 +1,6 @@
 import ts from "typescript";
 import * as path from "node:path";
-import { canonicalizeType } from "./canonicalize.js";
+import { canonicalizeType, canonicalizeClassType } from "./canonicalize.js";
 import type {
   ExtractOptions,
   Snapshot,
@@ -93,13 +93,19 @@ function signatureForSymbol(
 ): string {
   const decl = symbol.valueDeclaration ?? symbol.declarations?.[0] ?? location;
 
-  // For type aliases, interfaces, and classes use the declared type: this gives
-  // the resolved shape (for aliases/interfaces) or the instance type (for classes).
-  // The constructor/value type from getTypeOfSymbolAtLocation returns `typeof Foo`
-  // for classes, which has construct signatures that block member expansion.
-  if (kind === "type-alias" || kind === "interface" || kind === "class") {
+  // For type aliases and interfaces use the declared type (resolved shape).
+  if (kind === "type-alias" || kind === "interface") {
     const declared = checker.getDeclaredTypeOfSymbol(symbol);
     return canonicalizeType(declared, checker);
+  }
+
+  // For classes: combine instance members with explicit constructor signatures.
+  // getDeclaredTypeOfSymbol gives the instance type; getTypeOfSymbolAtLocation
+  // gives typeof Foo (the constructor type) which holds construct signatures.
+  if (kind === "class") {
+    const instanceType = checker.getDeclaredTypeOfSymbol(symbol);
+    const constructorType = checker.getTypeOfSymbolAtLocation(symbol, decl);
+    return canonicalizeClassType(instanceType, constructorType, checker);
   }
 
   const type = checker.getTypeOfSymbolAtLocation(symbol, decl);
