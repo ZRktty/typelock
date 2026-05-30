@@ -3,3 +3,4 @@ dist/
 *.log
 .claude/
 .idea/
+.compound-engineering/*.local.yaml
