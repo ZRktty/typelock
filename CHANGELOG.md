@@ -2,7 +2,7 @@
 
 All notable changes to typesnapshot are documented here.
 
-## [Unreleased]
+## [0.1.2] — 2026-05-30
 
 ### Fixed
 
