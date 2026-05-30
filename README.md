@@ -25,15 +25,15 @@ npm install --save-dev typesnapshot
 
 ```bash
 # 1. Create the baseline (commit api.typesnap to your repo)
-npx typesnap --update
+npx typesnapshot --update
 
 # 2. In CI, check the current types against the baseline
-npx typesnap
+npx typesnapshot
 #   exit 0 → unchanged, or only non-breaking additions
 #   exit 1 → breaking change detected
 
 # 3. When a change is intentional, regenerate and commit
-npx typesnap --update
+npx typesnapshot --update
 ```
 
 The reviewer sees the type-surface change as a normal git diff on `api.typesnap`. A breaking change becomes a deliberate, reviewed decision instead of an accident.
@@ -58,7 +58,7 @@ if (result.breaking.length > 0) {
 
 - **expect-type / tsd** — manual type assertions you write by hand. typesnapshot auto-generates the baseline (`--update`), like Jest. No hand-written assertions.
 - **typescript-breaking-change-detector** — AST-based, so it false-positives on alias renames. typesnapshot uses the TypeScript **type checker**, which resolves aliases: structurally identical types produce identical signatures.
-- **@microsoft/api-extractor** — powerful but heavy and monorepo-oriented, with a substantial setup. typesnapshot is `npx typesnap` with zero config.
+- **@microsoft/api-extractor** — powerful but heavy and monorepo-oriented, with a substantial setup. typesnapshot is `npx typesnapshot` with zero config.
 
 ## How it works
 

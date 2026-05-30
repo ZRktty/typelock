@@ -16,7 +16,7 @@ interface Args {
 function parseArgs(argv: string[]): Args {
   const args: Args = {
     entry: "src/index.ts",
-    snapfile: "api.typesnap",
+    snapfile: "api.typesnapshot",
     update: false,
     help: false,
   };
@@ -33,22 +33,22 @@ function parseArgs(argv: string[]): Args {
 }
 
 const HELP = `
-typesnap — snapshot your TypeScript public API surface
+typesnapshot — snapshot your TypeScript public API surface
 
 Usage:
-  typesnap [entry] [options]
+  typesnapshot [entry] [options]
 
 Options:
   -e, --entry <file>      Entry point (default: src/index.ts)
-  -s, --snapfile <file>   Snapshot file (default: api.typesnap)
+  -s, --snapfile <file>   Snapshot file (default: api.typesnapshot)
   -u, --update            Write/overwrite the snapshot baseline
       --tsconfig <file>   tsconfig.json to inherit compiler options from
   -h, --help              Show this help
 
 Examples:
-  typesnap --update                 Create the baseline (commit api.typesnap)
-  typesnap                          Check current types against baseline
-  typesnap -e src/public.ts -u      Snapshot a custom entry point
+  typesnapshot --update                 Create the baseline (commit api.typesnapshot)
+  typesnapshot                          Check current types against baseline
+  typesnapshot -e src/public.ts -u      Snapshot a custom entry point
 `;
 
 function main(): void {
@@ -97,14 +97,14 @@ function main(): void {
   if (result.breaking.length > 0) {
     process.stderr.write(
       `✗ ${result.breaking.length} breaking change(s) detected.\n` +
-        `  If intentional, run \`typesnap --update\` and commit the new baseline.\n`,
+        `  If intentional, run \`typesnapshot --update\` and commit the new baseline.\n`,
     );
     process.exit(1);
   }
 
   process.stdout.write(
     `Only non-breaking additions detected.\n` +
-      `  Run \`typesnap --update\` to accept them into the baseline.\n`,
+      `  Run \`typesnapshot --update\` to accept them into the baseline.\n`,
   );
   process.exit(0);
 }
