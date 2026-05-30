@@ -50,7 +50,7 @@ flowchart TD
 ## Step 1 — install
 
 ```bash
-npm install --save-dev typelock
+npm install --save-dev @zrktty/typelock
 ```
 
 `typescript` must already be a dependency (peer or dev). Any version `>=4.7 <6` works.

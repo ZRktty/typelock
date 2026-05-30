@@ -20,7 +20,7 @@ export interface FoldOptions {
 ## Install
 
 ```bash
-npm install --save-dev typelock
+npm install --save-dev @zrktty/typelock
 ```
 
 ## Usage
@@ -43,7 +43,7 @@ The reviewer sees the type-surface change as a normal git diff on `api.typelock`
 ## Programmatic API
 
 ```ts
-import { extract, diff, parse } from "typelock";
+import { extract, diff, parse } from "@zrktty/typelock";
 import { readFileSync } from "node:fs";
 
 const current = extract({ entry: "src/index.ts" });
