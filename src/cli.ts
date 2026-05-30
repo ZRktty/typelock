@@ -16,7 +16,7 @@ interface Args {
 function parseArgs(argv: string[]): Args {
   const args: Args = {
     entry: "src/index.ts",
-    snapfile: "api.typesnapshot",
+    snapfile: "api.typelock",
     update: false,
     help: false,
   };
@@ -33,22 +33,22 @@ function parseArgs(argv: string[]): Args {
 }
 
 const HELP = `
-typesnapshot — snapshot your TypeScript public API surface
+typelock — lock your TypeScript public API surface
 
 Usage:
-  typesnapshot [entry] [options]
+  typelock [entry] [options]
 
 Options:
   -e, --entry <file>      Entry point (default: src/index.ts)
-  -s, --snapfile <file>   Snapshot file (default: api.typesnapshot)
+  -s, --snapfile <file>   Snapshot file (default: api.typelock)
   -u, --update            Write/overwrite the snapshot baseline
       --tsconfig <file>   tsconfig.json to inherit compiler options from
   -h, --help              Show this help
 
 Examples:
-  typesnapshot --update                 Create the baseline (commit api.typesnapshot)
-  typesnapshot                          Check current types against baseline
-  typesnapshot -e src/public.ts -u      Snapshot a custom entry point
+  typelock --update                 Create the baseline (commit api.typelock)
+  typelock                          Check current types against baseline
+  typelock -e src/public.ts -u      Snapshot a custom entry point
 `;
 
 function main(): void {
@@ -97,14 +97,14 @@ function main(): void {
   if (result.breaking.length > 0) {
     process.stderr.write(
       `✗ ${result.breaking.length} breaking change(s) detected.\n` +
-        `  If intentional, run \`typesnapshot --update\` and commit the new baseline.\n`,
+        `  If intentional, run \`typelock --update\` and commit the new baseline.\n`,
     );
     process.exit(1);
   }
 
   process.stdout.write(
     `Only non-breaking additions detected.\n` +
-      `  Run \`typesnapshot --update\` to accept them into the baseline.\n`,
+      `  Run \`typelock --update\` to accept them into the baseline.\n`,
   );
   process.exit(0);
 }

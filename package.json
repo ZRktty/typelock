@@ -1,7 +1,7 @@
 {
-  "name": "typesnapshot",
+  "name": "typelock",
   "version": "0.1.3",
-  "description": "Snapshot testing for your TypeScript public API surface. Catch accidental type-breaking changes in CI, the way Jest snapshots catch accidental value changes.",
+  "description": "Lock your TypeScript API. Ship with confidence. Creates snapshots of your public type surface and fails CI when the surface changes unexpectedly — the way Jest snapshots catch accidental value changes.",
   "keywords": [
     "typescript",
     "snapshot-testing",
@@ -20,11 +20,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ZRktty/typesnapshot.git"
+    "url": "git+https://github.com/ZRktty/typelock.git"
   },
-  "homepage": "https://github.com/ZRktty/typesnapshot#readme",
+  "homepage": "https://github.com/ZRktty/typelock#readme",
   "bugs": {
-    "url": "https://github.com/ZRktty/typesnapshot/issues"
+    "url": "https://github.com/ZRktty/typelock/issues"
   },
   "type": "module",
   "main": "./dist/index.js",
@@ -36,7 +36,7 @@
     }
   },
   "bin": {
-    "typesnapshot": "dist/cli.js"
+    "typelock": "dist/cli.js"
   },
   "files": [
     "dist",

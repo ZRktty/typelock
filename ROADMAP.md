@@ -1,4 +1,4 @@
-# typesnapshot Roadmap
+# typelock Roadmap
 
 The vision: the simplest possible tool that reliably catches breaking TypeScript API changes in CI — the thing `@microsoft/api-extractor` does, but without the 30-minute setup tax and monorepo assumptions. A developer should be able to go from zero to protected in one `npx` command.
 
@@ -12,7 +12,7 @@ This roadmap is ordered by what matters most, not what is easiest to build.
 
 The tool has not yet been run against a real-world library. Unit tests against hand-crafted fixtures are necessary but not sufficient — real codebases have patterns (conditional types, mapped types, deeply nested generics, re-export barrels from `node_modules`, declaration merging) that fixtures don't cover.
 
-**Goal**: Run `typesnapshot --update` on at least one production TypeScript library, commit the baseline, make a deliberate breaking change, and verify the diff output matches what a human reviewer would expect.
+**Goal**: Run `typelock --update` on at least one production TypeScript library, commit the baseline, make a deliberate breaking change, and verify the diff output matches what a human reviewer would expect.
 
 **Acceptance criteria**:
 
@@ -157,18 +157,18 @@ Once the tool is trustworthy, these items maximize adoption and make it hard to 
 
 ### 2.1 Official GitHub Action
 
-The single highest-leverage distribution move. A one-liner that adds typesnapshot to any repo:
+The single highest-leverage distribution move. A one-liner that adds typelock to any repo:
 
 ```yaml
-- uses: ZRktty/typesnapshot-action@v1
+- uses: ZRktty/typelock-action@v1
   with:
     entry: src/index.ts        # optional, default: src/index.ts
-    snapfile: api.typesnapshot # optional
+    snapfile: api.typelock # optional
 ```
 
 The action should:
-- Install the correct typesnapshot version (pinned in the action's `package.json`)
-- Run `typesnapshot`
+- Install the correct typelock version (pinned in the action's `package.json`)
+- Run `typelock`
 - On failure, output the diff as a GitHub Actions job summary (not just stderr)
 - On `--update` mode, commit the updated baseline back to the branch (optional, configurable)
 
@@ -182,7 +182,7 @@ The action should:
 Cross-references the detected surface changes with the `version` field in `package.json`:
 
 ```bash
-typesnapshot --check-semver
+typelock --check-semver
 # ✗ Breaking changes detected but version bump is 1.2.3 → 1.2.4 (patch).
 #   Breaking changes require a major version bump (2.0.0).
 ```
@@ -206,21 +206,21 @@ Real packages frequently ship multiple entry points: `my-lib`, `my-lib/utils`, `
 
 ```json
 {
-  "typesnapshot": {
+  "typelock": {
     "entries": [
-      { "entry": "src/index.ts",       "snapfile": "api/main.typesnapshot" },
-      { "entry": "src/utils/index.ts", "snapfile": "api/utils.typesnapshot" },
-      { "entry": "src/react/index.ts", "snapfile": "api/react.typesnapshot" }
+      { "entry": "src/index.ts",       "snapfile": "api/main.typelock" },
+      { "entry": "src/utils/index.ts", "snapfile": "api/utils.typelock" },
+      { "entry": "src/react/index.ts", "snapfile": "api/react.typelock" }
     ]
   }
 }
 ```
 
-Or a standalone `typesnapshot.config.ts` file for projects that prefer it.
+Or a standalone `typelock.config.ts` file for projects that prefer it.
 
 **Acceptance criteria**:
-- `typesnapshot --update` writes all snapshot files when config lists multiple entries
-- `typesnapshot` checks all entries and reports breaking changes across all
+- `typelock --update` writes all snapshot files when config lists multiple entries
+- `typelock` checks all entries and reports breaking changes across all
 - Single-entry usage (no config file) is unchanged
 
 ### 2.4 `--format` flag
@@ -228,8 +228,8 @@ Or a standalone `typesnapshot.config.ts` file for projects that prefer it.
 Output formats beyond the default human-readable text:
 
 ```bash
-typesnapshot --format json   # machine-readable for custom tooling
-typesnapshot --format md     # GitHub-flavored markdown for PR comments
+typelock --format json   # machine-readable for custom tooling
+typelock --format md     # GitHub-flavored markdown for PR comments
 ```
 
 The JSON format enables building custom reporters, Slack bots, PR comment bots, etc. without forking the tool.
@@ -252,7 +252,7 @@ Use a zero-dependency color approach (ANSI escape codes directly, with `NO_COLOR
 ### 3.2 Watch mode
 
 ```bash
-typesnapshot --watch
+typelock --watch
 ```
 
 Watches the source files for changes and re-runs the check on save. Designed for the tight edit → check loop during active development, so breaking changes surface immediately rather than at CI time.
@@ -261,7 +261,7 @@ Implementation: use Node's `fs.watch` (no extra deps). Debounce re-runs by 300ms
 
 ### 3.3 Snapshot diff in PR comments (bot)
 
-A companion GitHub Action step (or option in the main action) that posts the `api.typesnapshot` diff as an inline PR comment when the surface changes. Reviewers see the type surface change without having to read the snapshot file diff directly.
+A companion GitHub Action step (or option in the main action) that posts the `api.typelock` diff as an inline PR comment when the surface changes. Reviewers see the type surface change without having to read the snapshot file diff directly.
 
 ### 3.4 `--silent` and `--verbose` flags
 
@@ -277,8 +277,8 @@ A companion GitHub Action step (or option in the main action) that posts the `ap
 Detect the surface diff and automatically generate a changeset entry:
 
 ```bash
-typesnapshot --changeset
-# Writes .changeset/typesnapshot-auto-XXXX.md
+typelock --changeset
+# Writes .changeset/typelock-auto-XXXX.md
 # major bump if breaking changes, minor if safe additions, nothing if no changes
 ```
 
@@ -286,11 +286,11 @@ Works with the [changesets](https://github.com/changesets/changesets) workflow u
 
 ### 4.2 semantic-release plugin
 
-A `semantic-release` plugin that runs `typesnapshot` during the `verifyConditions` step and fails the release if breaking changes are being shipped as a minor or patch.
+A `semantic-release` plugin that runs `typelock` during the `verifyConditions` step and fails the release if breaking changes are being shipped as a minor or patch.
 
 ### 4.3 TypeScript version compatibility matrix in CI
 
-A GitHub Actions matrix that tests `typesnapshot` itself against TypeScript 4.7, 5.0, 5.4, 5.5, 6.x on every push. Currently tested manually; this makes the guarantee continuous.
+A GitHub Actions matrix that tests `typelock` itself against TypeScript 4.7, 5.0, 5.4, 5.5, 6.x on every push. Currently tested manually; this makes the guarantee continuous.
 
 ```yaml
 strategy:
@@ -304,7 +304,7 @@ Inline API surface indicators in the editor:
 
 - A gutter icon on exported symbols showing "in baseline" / "changed from baseline" / "new since baseline"
 - A warning squiggle when a change to an exported symbol would be breaking
-- Command palette: "Update typesnapshot baseline"
+- Command palette: "Update typelock baseline"
 
 This is a significant investment and depends on the core tool being stable first.
 
@@ -314,7 +314,7 @@ This is a significant investment and depends on the core tool being stable first
 
 **Full variance analysis**: Determining whether a type change is safe based on its position in the type graph (covariant, contravariant, invariant, bivariant) is equivalent to implementing a type system. The heuristic approach in Phase 1.1 covers 80% of real cases with 5% of the complexity. Full variance analysis is a research project.
 
-**Runtime type checking**: typesnapshot is a static analysis tool. It does not validate that runtime values match the declared types. Use `zod`, `io-ts`, or similar for that.
+**Runtime type checking**: typelock is a static analysis tool. It does not validate that runtime values match the declared types. Use `zod`, `io-ts`, or similar for that.
 
 **Cross-package compatibility checking**: Checking whether a downstream consumer's code still compiles after an upstream type change requires having the downstream source. Out of scope.
 
@@ -324,7 +324,7 @@ This is a significant investment and depends on the core tool being stable first
 
 ## Success metrics
 
-The goal is not downloads — it is developers who commit `api.typesnapshot` to their repo and never remove it because it keeps catching real problems.
+The goal is not downloads — it is developers who commit `api.typelock` to their repo and never remove it because it keeps catching real problems.
 
 Milestones:
 1. Tool runs correctly on 3 different real open-source TypeScript libraries without false positives

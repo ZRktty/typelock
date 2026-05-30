@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to typesnapshot are documented here.
+All notable changes to typelock are documented here.
 
 ## [0.1.3] — 2026-05-30
 
@@ -35,8 +35,8 @@ These three fixes close the Phase 0 blocker found during real-world testing agai
 
 Initial release.
 
-- `typesnapshot --update` to generate/regenerate baseline
-- `typesnapshot` to check against baseline in CI
+- `typelock --update` to generate/regenerate baseline
+- `typelock` to check against baseline in CI
 - Canonical serialization: unions sorted, object props sorted, aliases resolved
 - `boolean` normalized (no `false | true` split)
 - Optional props rendered without implicit `| undefined`

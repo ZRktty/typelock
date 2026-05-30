@@ -1,6 +1,6 @@
-# typesnapshot tutorial
+# typelock tutorial
 
-This guide walks you through adding `typesnapshot` to an existing TypeScript library so that accidental breaking type changes are caught in CI before they reach consumers.
+This guide walks you through adding `typelock` to an existing TypeScript library so that accidental breaking type changes are caught in CI before they reach consumers.
 
 ## The problem
 
@@ -16,7 +16,7 @@ export interface QueryOptions {
 
 The build is green. Tests pass. The patch release ships. Someone's TypeScript project breaks.
 
-`typesnapshot` adds a third check: a committed snapshot of your public type surface that fails CI the moment the surface changes unexpectedly.
+`typelock` adds a third check: a committed snapshot of your public type surface that fails CI the moment the surface changes unexpectedly.
 
 ---
 
@@ -24,24 +24,24 @@ The build is green. Tests pass. The patch release ships. Someone's TypeScript pr
 
 ```mermaid
 flowchart TD
-    A([Start: existing TS library]) --> B[Install typesnapshot]
-    B --> C[npx typesnapshot --update]
-    C --> D[Commit api.typesnapshot baseline]
+    A([Start: existing TS library]) --> B[Install typelock]
+    B --> C[npx typelock --update]
+    C --> D[Commit api.typelock baseline]
     D --> E{Working on a change?}
 
     E -- feature branch --> F[Edit source]
-    F --> G[npx typesnapshot]
+    F --> G[npx typelock]
 
     G --> H{Surface changed?}
 
     H -- no changes --> I([CI green ✓])
     H -- breaking change\nunintended --> J[Fix the code]
     J --> G
-    H -- breaking change\nintentional --> K[npx typesnapshot --update]
+    H -- breaking change\nintentional --> K[npx typelock --update]
     K --> L[Commit updated baseline\nwith the PR]
-    L --> M([Reviewer sees diff in\napi.typesnapshot ✓])
+    L --> M([Reviewer sees diff in\napi.typelock ✓])
 
-    H -- only additions\nnon-breaking --> N[npx typesnapshot --update\noptional: accept additions]
+    H -- only additions\nnon-breaking --> N[npx typelock --update\noptional: accept additions]
     N --> L
 ```
 
@@ -50,7 +50,7 @@ flowchart TD
 ## Step 1 — install
 
 ```bash
-npm install --save-dev typesnapshot
+npm install --save-dev typelock
 ```
 
 `typescript` must already be a dependency (peer or dev). Any version `>=4.7 <6` works.
@@ -59,17 +59,17 @@ npm install --save-dev typesnapshot
 
 ## Step 2 — create the baseline
 
-Point `typesnapshot` at your library's entry point and write the initial snapshot:
+Point `typelock` at your library's entry point and write the initial snapshot:
 
 ```bash
-npx typesnapshot --update
-# → Wrote 14 exports to api.typesnapshot
+npx typelock --update
+# → Wrote 14 exports to api.typelock
 ```
 
-This creates `api.typesnapshot` in your project root — a plain-text, line-diffable file:
+This creates `api.typelock` in your project root — a plain-text, line-diffable file:
 
 ```
-// @typesnapshot v1
+// @typelock v1
 // typescript 5.4.5
 
 function createClient: (opts: { baseUrl: string; timeout?: number }) => Client
@@ -81,14 +81,14 @@ type StatusCode: 200 | 400 | 404 | 500
 **Commit this file.** It is the source of truth that CI will check against.
 
 ```bash
-git add api.typesnapshot
-git commit -m "chore: add typesnapshot baseline"
+git add api.typelock
+git commit -m "chore: add typelock baseline"
 ```
 
 If your entry point is not `src/index.ts`, pass it explicitly:
 
 ```bash
-npx typesnapshot --entry src/public.ts --update
+npx typelock --entry src/public.ts --update
 ```
 
 ---
@@ -100,7 +100,7 @@ Add a script to `package.json`:
 ```json
 {
   "scripts": {
-    "typecheck:api": "typesnapshot"
+    "typecheck:api": "typelock"
   }
 }
 ```
@@ -113,7 +113,7 @@ Then call it from your CI pipeline. GitHub Actions example:
   run: npm run typecheck:api
 ```
 
-`typesnapshot` exits `0` when nothing changed (or only safe additions), and `1` when a breaking change is detected.
+`typelock` exits `0` when nothing changed (or only safe additions), and `1` when a breaking change is detected.
 
 ---
 
@@ -122,7 +122,7 @@ Then call it from your CI pipeline. GitHub Actions example:
 ### Nothing changed
 
 ```bash
-npx typesnapshot
+npx typelock
 # ✓ Public type surface unchanged.
 ```
 
@@ -131,7 +131,7 @@ CI passes with no action needed.
 ### You added a new optional field (non-breaking)
 
 ```bash
-npx typesnapshot
+npx typelock
 # Public type surface changed:
 #
 #   ~ CHANGED  interface QueryOptions  [safe]
@@ -139,7 +139,7 @@ npx typesnapshot
 #       after:  { locale?: string; retries: number; timeout: number }
 #
 # Only non-breaking additions detected.
-#   Run `typesnapshot --update` to accept them into the baseline.
+#   Run `typelock --update` to accept them into the baseline.
 ```
 
 Run `--update`, commit the new baseline alongside your code change.
@@ -147,7 +147,7 @@ Run `--update`, commit the new baseline alongside your code change.
 ### You made a breaking change — intentionally
 
 ```bash
-npx typesnapshot
+npx typelock
 # Public type surface changed:
 #
 #   ~ CHANGED  interface QueryOptions  [breaking]
@@ -155,22 +155,22 @@ npx typesnapshot
 #       after:  { retries: number; timeout?: number }
 #
 # ✗ 1 breaking change(s) detected.
-#   If intentional, run `typesnapshot --update` and commit the new baseline.
+#   If intentional, run `typelock --update` and commit the new baseline.
 ```
 
 This is a major version bump. Update the baseline and include the diff in your PR so reviewers see exactly what changed:
 
 ```bash
-npx typesnapshot --update
-git add api.typesnapshot
+npx typelock --update
+git add api.typelock
 git commit -m "feat!: make QueryOptions.timeout optional"
 ```
 
-The PR will show a clear diff in `api.typesnapshot`. Reviewers don't need to reason about the TypeScript — the file tells them exactly what the surface change is.
+The PR will show a clear diff in `api.typelock`. Reviewers don't need to reason about the TypeScript — the file tells them exactly what the surface change is.
 
 ### You made a breaking change — by accident
 
-The same output as above, but you didn't mean to. Fix the code until `typesnapshot` passes without `--update`.
+The same output as above, but you didn't mean to. Fix the code until `typelock` passes without `--update`.
 
 ---
 
@@ -178,11 +178,11 @@ The same output as above, but you didn't mean to. Fix the code until `typesnapsh
 
 | Command | What it does |
 |---|---|
-| `typesnapshot --update` | Write or overwrite the snapshot baseline |
-| `typesnapshot` | Check current types against baseline; exit 1 on breaking change |
-| `typesnapshot --entry src/public.ts` | Use a custom entry point |
-| `typesnapshot --snapfile types.snap` | Use a custom snapshot file path |
-| `typesnapshot --tsconfig tsconfig.build.json` | Inherit a specific tsconfig |
+| `typelock --update` | Write or overwrite the snapshot baseline |
+| `typelock` | Check current types against baseline; exit 1 on breaking change |
+| `typelock --entry src/public.ts` | Use a custom entry point |
+| `typelock --snapfile types.snap` | Use a custom snapshot file path |
+| `typelock --tsconfig tsconfig.build.json` | Inherit a specific tsconfig |
 
 ---
 
@@ -197,4 +197,4 @@ The same output as above, but you didn't mean to. Fix the code until `typesnapsh
 | New optional property added | Safe (additive) |
 | New export added | Safe (additive) |
 
-When in doubt, `typesnapshot` flags a change as breaking. A false "breaking" warning is annoying; a missed breaking change is the bug that makes the tool worthless.
+When in doubt, `typelock` flags a change as breaking. A false "breaking" warning is annoying; a missed breaking change is the bug that makes the tool worthless.

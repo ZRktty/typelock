@@ -1,14 +1,14 @@
 import type { Snapshot, ExportEntry, ExportKind } from "./types.js";
 
-const HEADER = "// @typesnapshot v1";
+const HEADER = "// @typelock v1";
 
 /**
- * Serialize a snapshot to the .typesnap text format.
+ * Serialize a snapshot to the .typelock text format.
  *
  * Line-delimited and diffable in git, so a reviewer sees exactly which part
  * of the public surface moved in a PR. One export per line:
  *
- *   // @typesnapshot v1
+ *   // @typelock v1
  *   // typescript 5.4.5
  *
  *   function fold: (input: string) => string
