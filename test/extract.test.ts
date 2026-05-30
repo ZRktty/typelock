@@ -161,3 +161,93 @@ test(".typesnap round-trips through serialize/parse", () => {
     "parse(serialize(x)) must preserve exports",
   );
 });
+
+// ── Phase 1.1: function signature classification ──────────────────────────────
+
+function fnSnap(signature: string) {
+  return {
+    formatVersion: 1,
+    typescriptVersion: "test",
+    exports: [{ name: "fn", kind: "function", signature }],
+  };
+}
+
+test("adding an optional parameter is non-breaking", () => {
+  const result = diff(
+    fnSnap("(a: string) => void"),
+    fnSnap("(a: string, b?: number) => void"),
+  );
+  const change = result.changed.find((c) => c.name === "fn");
+  assert.ok(change, "should register a change");
+  assert.equal(change.breaking, false, "added optional param is non-breaking");
+});
+
+test("adding a required parameter is breaking", () => {
+  const result = diff(
+    fnSnap("(a: string) => void"),
+    fnSnap("(a: string, b: number) => void"),
+  );
+  const change = result.changed.find((c) => c.name === "fn");
+  assert.ok(change, "should register a change");
+  assert.equal(change.breaking, true, "added required param is breaking");
+});
+
+test("required parameter becoming optional is non-breaking", () => {
+  const result = diff(
+    fnSnap("(a: string, b: number) => void"),
+    fnSnap("(a: string, b?: number) => void"),
+  );
+  const change = result.changed.find((c) => c.name === "fn");
+  assert.ok(change, "should register a change");
+  assert.equal(change.breaking, false, "required→optional param is non-breaking");
+});
+
+test("removing a parameter is breaking", () => {
+  const result = diff(
+    fnSnap("(a: string, b: number) => void"),
+    fnSnap("(a: string) => void"),
+  );
+  const change = result.changed.find((c) => c.name === "fn");
+  assert.ok(change, "should register a change");
+  assert.equal(change.breaking, true, "removed param is breaking");
+});
+
+test("return type change is breaking", () => {
+  const result = diff(
+    fnSnap("() => string"),
+    fnSnap("() => string | null"),
+  );
+  const change = result.changed.find((c) => c.name === "fn");
+  assert.ok(change, "should register a change");
+  assert.equal(change.breaking, true, "return type change is breaking");
+});
+
+test("parameter type change is breaking", () => {
+  const result = diff(
+    fnSnap("(a: string) => void"),
+    fnSnap("(a: string | number) => void"),
+  );
+  const change = result.changed.find((c) => c.name === "fn");
+  assert.ok(change, "should register a change");
+  assert.equal(change.breaking, true, "param type change is breaking (conservative)");
+});
+
+test("adding multiple optional parameters is non-breaking", () => {
+  const result = diff(
+    fnSnap("(a: string) => void"),
+    fnSnap("(a: string, b?: number, c?: boolean) => void"),
+  );
+  const change = result.changed.find((c) => c.name === "fn");
+  assert.ok(change, "should register a change");
+  assert.equal(change.breaking, false, "multiple added optional params are non-breaking");
+});
+
+test("function with object param: adding optional field is non-breaking", () => {
+  const result = diff(
+    fnSnap("(opts: { x: string }) => void"),
+    fnSnap("(opts: { x: string; y?: number }) => void"),
+  );
+  const change = result.changed.find((c) => c.name === "fn");
+  assert.ok(change, "should register a change");
+  assert.equal(change.breaking, false, "added optional field in object param is non-breaking");
+});
