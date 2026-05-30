@@ -68,7 +68,7 @@ Every exported symbol gets a fully resolved structural signature:
 
 - **Type aliases** — expanded to their resolved shape (`Record<string, string>` → `{ [key: string]: string }`)
 - **Interfaces** — all declared members, sorted by name
-- **Classes** — instance members (methods and properties), sorted by name; static members and constructor signature are not yet tracked (see roadmap)
+- **Classes** — instance members (methods and properties) and explicit constructor signature (`new(param: T, ...)`), sorted by name; static members are not yet tracked (see roadmap)
 - **Functions** — parameter and return types
 - **Enums and namespaces** — member names and values
 
@@ -82,7 +82,7 @@ To get there, typesnapshot normalizes at the type-object level (not on rendered 
 
 ## Known limitations (MVP)
 
-This is an early MVP. The following are out of scope for now: class static members and constructor signatures, variance analysis at the parameter level (contravariant inputs vs covariant outputs), a `--check-semver` flag that validates against your `package.json` version bump, multi-entry-point / monorepo support, and a GitHub Action wrapper.
+This is an early MVP. The following are out of scope for now: class static members, variance analysis at the parameter level (contravariant inputs vs covariant outputs), a `--check-semver` flag that validates against your `package.json` version bump, multi-entry-point / monorepo support, and a GitHub Action wrapper.
 
 ## License
 

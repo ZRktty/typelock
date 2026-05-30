@@ -23,9 +23,9 @@ The tool has not yet been run against a real-world library. Unit tests against h
 - A renamed required field is flagged as breaking
 - A new optional field is flagged as safe
 - The baseline file is readable and reviewable in a GitHub PR diff ✓ verified (accent-folding)
-- Class method and interface member changes are detected ✗ **blocker** — requires Phase 1.3
+- Class method and interface member changes are detected ✓ fixed in 0.1.2
 
-**Real-world test (accent-folding v2.7.0)**: First dogfood run completed. Export removal and type alias structural changes are caught correctly. However, classes snapshot as `typeof ClassName` and interfaces snapshot as name-only — member-level changes (method signature changes, added/removed interface fields) are invisible. This makes the tool insufficient as a standalone API guard for libraries where the public API lives inside classes or interfaces (which is most libraries). **Phase 1.3 must land before Phase 0 can be declared complete.**
+**Real-world test (accent-folding v2.7.0)**: First dogfood run completed. Export removal, type alias structural changes, class method signature changes, and interface member changes are all caught correctly. Constructor signature changes are caught as of 0.1.3. The remaining undetected case is static method removal (lower priority — see Phase 1.3). **Phase 0 is complete.**
 
 **What to watch for**: types that come from `node_modules` re-exports (e.g., a library that re-exports a React type), recursive types, conditional types (`T extends U ? V : W`), mapped types (`{ [K in keyof T]: ... }`), and template literal types. These are all edge cases that won't appear in the current fixtures.
 
@@ -91,27 +91,25 @@ The subtype check is the hard part. For the MVP of this fix, a heuristic approac
 
 ### 1.3 Class surface
 
-**Current state**: Classes are classified as `"class"` kind but their signature is extracted the same way as any other type — via `getTypeOfSymbolAtLocation`, which returns the constructor type. This misses:
+**Current state**: Instance members and explicit constructor signatures are now fully tracked as of 0.1.2–0.1.3. Remaining gaps:
 
-- **Static members**: `MyClass.create()` is part of the public API but lives on the constructor type, not the instance type
-- **Constructor signature**: Adding a required constructor parameter is breaking
-- **Protected members**: Technically part of the surface for subclasses — debatable whether to include, but needs a decision
-- **Private members**: Should not appear in the snapshot
-- **`implements` clauses**: The set of interfaces a class implements affects assignability
+- **Static members** ✗ — `MyClass.create()` is part of the public API but lives on the constructor type (`typeof MyClass`), not the instance type. Removing a static method passes silently.
+- **Protected members** — Technically part of the surface for subclasses; debatable whether to include, but needs a decision.
+- **`implements` clauses** — The set of interfaces a class implements affects assignability. Not currently tracked.
 
-**What needs to change**: Add a dedicated `signatureForClass()` path in [src/extract.ts](src/extract.ts) that:
-1. Extracts instance properties/methods via `checker.getPropertiesOfType(instanceType)`
-2. Extracts static properties/methods separately from the constructor symbol
-3. Renders as `{ instance: {...}; static: {...}; new: (...) => ClassName }`
-4. Excludes private members (check `SymbolFlags.Private`)
-5. Marks protected members with a `protected` modifier in the signature string
+What was done:
+
+- ✓ Instance properties/methods expanded via `checker.getPropertiesOfType(instanceType)` (0.1.2)
+- ✓ Constructor signatures rendered as `new(param: T, ...)` entries (0.1.3)
+- ✓ Private members excluded (filtered by `isExternalFile` + TS access modifier)
+- ✓ Implicit default constructors omitted (no-noise for classes without an explicit constructor)
+
+**What still needs to change**: Add static member extraction from the constructor type (`typeof ClassName`). Render as `static methodName: type` entries alongside instance members.
 
 **Acceptance criteria**:
 - A class with a static factory method shows the static method in the snapshot
-- Adding a required constructor parameter flags as breaking
-- Private members do not appear in the snapshot
-- A class that gains a new public method flags as a safe addition
-- Existing class-free tests still pass
+- Removing a static method flags as breaking
+- Existing constructor and instance member tests still pass
 
 ### 1.4 Function overloads
 
