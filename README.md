@@ -15,6 +15,8 @@ export interface FoldOptions {
 
 `typesnapshot` extracts a canonical signature of your public exports, commits it as a diffable baseline, and fails CI when the surface changes unexpectedly.
 
+**New here?** See the [step-by-step tutorial](tutorial.md) for a full workflow walkthrough, CI setup, and a decision flowchart.
+
 ## Install
 
 ```bash
@@ -36,7 +38,7 @@ npx typesnapshot
 npx typesnapshot --update
 ```
 
-The reviewer sees the type-surface change as a normal git diff on `api.typesnap`. A breaking change becomes a deliberate, reviewed decision instead of an accident.
+The reviewer sees the type-surface change as a normal git diff on `api.typesnapshot`. A breaking change becomes a deliberate, reviewed decision instead of an accident.
 
 ## Programmatic API
 
@@ -45,7 +47,7 @@ import { extract, diff, parse } from "typesnapshot";
 import { readFileSync } from "node:fs";
 
 const current = extract({ entry: "src/index.ts" });
-const baseline = parse(readFileSync("api.typesnap", "utf8"));
+const baseline = parse(readFileSync("api.typesnapshot", "utf8"));
 const result = diff(baseline, current);
 
 if (result.breaking.length > 0) {
@@ -68,14 +70,7 @@ To get there, typesnapshot normalizes at the type-object level (not on rendered 
 
 ## Known limitations (MVP)
 
-This is an early MVP. Two canonicalization refinements are pending:
-
-1. **`boolean` renders as `false | true`** — the type checker decomposes the boolean union internally. A normalization pass should re-collapse `true | false` back to `boolean`.
-2. **Optional members carry a redundant `| undefined`** — an optional `locale?: string` currently renders as `locale?: string | undefined`. When the `?` modifier is present, the trailing `| undefined` should be stripped to keep diffs clean.
-
-Neither affects correctness of breaking-change detection, but both add noise to diffs and should be fixed before a 1.0.
-
-Also out of scope for now: variance analysis at the parameter level (contravariant inputs vs covariant outputs), a `--check-semver` flag that validates against your `package.json` version bump, multi-entry-point / monorepo support, and a GitHub Action wrapper.
+This is an early MVP. The following are out of scope for now: variance analysis at the parameter level (contravariant inputs vs covariant outputs), a `--check-semver` flag that validates against your `package.json` version bump, multi-entry-point / monorepo support, and a GitHub Action wrapper.
 
 ## License
 
