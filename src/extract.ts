@@ -93,9 +93,11 @@ function signatureForSymbol(
 ): string {
   const decl = symbol.valueDeclaration ?? symbol.declarations?.[0] ?? location;
 
-  // For type aliases and interfaces, use the declared type so we expand the
-  // shape rather than getting the constructor/value type.
-  if (kind === "type-alias" || kind === "interface") {
+  // For type aliases, interfaces, and classes use the declared type: this gives
+  // the resolved shape (for aliases/interfaces) or the instance type (for classes).
+  // The constructor/value type from getTypeOfSymbolAtLocation returns `typeof Foo`
+  // for classes, which has construct signatures that block member expansion.
+  if (kind === "type-alias" || kind === "interface" || kind === "class") {
     const declared = checker.getDeclaredTypeOfSymbol(symbol);
     return canonicalizeType(declared, checker);
   }

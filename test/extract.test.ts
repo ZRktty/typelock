@@ -87,6 +87,48 @@ test("removing an export is breaking", () => {
   assert.equal(result.breaking[0].name, "gone");
 });
 
+test("interface members from a .d.ts entry are expanded (not name-only)", () => {
+  const snap = extract({ entry: fx("dts-lib.d.ts") });
+  const pos = snap.exports.find((e) => e.name === "Position");
+  assert.ok(pos, "Position should be extracted");
+  assert.ok(
+    pos.signature.includes("start") && pos.signature.includes("end"),
+    `Position members must be expanded, got: ${pos.signature}`,
+  );
+  assert.notEqual(pos.signature, "Position", "must not be name-only");
+});
+
+test("class instance members from a .d.ts entry are expanded", () => {
+  const snap = extract({ entry: fx("dts-lib.d.ts") });
+  const proc = snap.exports.find((e) => e.name === "Processor");
+  assert.ok(proc, "Processor should be extracted");
+  assert.ok(
+    proc.signature.includes("process") && proc.signature.includes("count"),
+    `Processor members must be expanded, got: ${proc.signature}`,
+  );
+  assert.ok(
+    !proc.signature.startsWith("typeof"),
+    "must not render as typeof constructor",
+  );
+});
+
+test("class method signature change is detected as breaking", () => {
+  const before = extract({ entry: fx("dts-lib.d.ts") });
+  const after = extract({ entry: fx("dts-lib-changed.d.ts") });
+  const result = diff(before, after);
+  const proc = result.changed.find((c) => c.name === "Processor");
+  assert.ok(proc, "Processor should appear in changed");
+  assert.equal(proc.breaking, true, "method return type change is breaking");
+});
+
+test("interface member addition is detected as a change", () => {
+  const before = extract({ entry: fx("dts-lib.d.ts") });
+  const after = extract({ entry: fx("dts-lib-changed.d.ts") });
+  const result = diff(before, after);
+  const pos = result.changed.find((c) => c.name === "Position");
+  assert.ok(pos, "Position should appear in changed");
+});
+
 test(".typesnap round-trips through serialize/parse", () => {
   const snap = extract({ entry: fx("foldlib.ts") });
   const reparsed = parse(serialize(snap));

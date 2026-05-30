@@ -91,7 +91,6 @@ function shouldExpandObject(type: ts.Type, checker: ts.TypeChecker): boolean {
   const decl = sym?.declarations?.[0];
   if (!decl) return false;
   const file = decl.getSourceFile();
-  if (file.isDeclarationFile) return false; // lib.d.ts, .d.ts deps
   if (file.fileName.includes("node_modules")) return false;
   return true;
 }
@@ -102,7 +101,13 @@ function canonicalizeObject(
   checker: ts.TypeChecker,
   depth: number,
 ): string {
-  const props = checker.getPropertiesOfType(type);
+  // Exclude properties declared in node_modules (lib.d.ts built-ins, inherited
+  // Object methods, etc.) so class instance types don't pollute with toString/valueOf.
+  const props = checker.getPropertiesOfType(type).filter((prop) => {
+    const d = prop.valueDeclaration ?? prop.declarations?.[0];
+    if (!d) return true;
+    return !d.getSourceFile().fileName.includes("node_modules");
+  });
   const rendered = props
     .map((prop) => {
       const decl = prop.valueDeclaration ?? prop.declarations?.[0];

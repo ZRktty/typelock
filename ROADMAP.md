@@ -15,13 +15,17 @@ The tool has not yet been run against a real-world library. Unit tests against h
 **Goal**: Run `typesnapshot --update` on at least one production TypeScript library, commit the baseline, make a deliberate breaking change, and verify the diff output matches what a human reviewer would expect.
 
 **Acceptance criteria**:
-- Snapshot covers all exported symbols without missing any or producing `any`
+
+- Snapshot covers all exported symbols without missing any or producing `any` ✓ verified (accent-folding)
 - `boolean` fields render as `boolean` (not `false | true`) ✓ fixed
 - Optional fields render without `| undefined` ✓ fixed
 - No spurious diffs across two clean runs on the same source
 - A renamed required field is flagged as breaking
 - A new optional field is flagged as safe
-- The baseline file is readable and reviewable in a GitHub PR diff
+- The baseline file is readable and reviewable in a GitHub PR diff ✓ verified (accent-folding)
+- Class method and interface member changes are detected ✗ **blocker** — requires Phase 1.3
+
+**Real-world test (accent-folding v2.7.0)**: First dogfood run completed. Export removal and type alias structural changes are caught correctly. However, classes snapshot as `typeof ClassName` and interfaces snapshot as name-only — member-level changes (method signature changes, added/removed interface fields) are invisible. This makes the tool insufficient as a standalone API guard for libraries where the public API lives inside classes or interfaces (which is most libraries). **Phase 1.3 must land before Phase 0 can be declared complete.**
 
 **What to watch for**: types that come from `node_modules` re-exports (e.g., a library that re-exports a React type), recursive types, conditional types (`T extends U ? V : W`), mapped types (`{ [K in keyof T]: ... }`), and template literal types. These are all edge cases that won't appear in the current fixtures.
 
