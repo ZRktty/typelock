@@ -24,12 +24,12 @@ export function canonicalizeType(
     return fallbackString(type, checker);
   }
 
-  // --- Union: sort members, dedupe, join with " | " ---
+  // --- Union: sort members, dedupe, collapse `false | true` → `boolean` ---
   if (type.isUnion()) {
     const members = type.types
       .map((t) => canonicalizeType(t, checker, depth + 1))
       .sort();
-    return dedupeSorted(members).join(" | ");
+    return dedupeSorted(collapseBooleanLiterals(members)).join(" | ");
   }
 
   // --- Intersection: sort members, dedupe, join with " & " ---
@@ -109,10 +109,12 @@ function canonicalizeObject(
       const propType = decl
         ? checker.getTypeOfSymbolAtLocation(prop, decl)
         : checker.getDeclaredTypeOfSymbol(prop);
-      const optional =
-        (prop.flags & ts.SymbolFlags.Optional) !== 0 ? "?" : "";
+      const isOptional = (prop.flags & ts.SymbolFlags.Optional) !== 0;
+      const optional = isOptional ? "?" : "";
       const readonly = isReadonlyProp(prop) ? "readonly " : "";
-      const sig = canonicalizeType(propType, checker, depth + 1);
+      const sig = isOptional
+        ? canonicalizeOptionalPropType(propType, checker, depth + 1)
+        : canonicalizeType(propType, checker, depth + 1);
       return `${readonly}${prop.getName()}${optional}: ${sig}`;
     })
     .sort();
@@ -150,6 +152,41 @@ function renderIndexSignatures(
     out.push(`[key: number]: ${canonicalizeType(numberIndex, checker, depth + 1)}`);
   }
   return out;
+}
+
+/**
+ * Replace the pair ["false", "true"] with "boolean" in a sorted member list.
+ * Handles the TypeScript internals that decompose `boolean` into its literal
+ * constituents before we ever see the type.
+ */
+function collapseBooleanLiterals(sorted: string[]): string[] {
+  if (!sorted.includes("false") || !sorted.includes("true")) return sorted;
+  const without = sorted.filter((m) => m !== "false" && m !== "true");
+  return dedupeSorted([...without, "boolean"].sort());
+}
+
+/**
+ * Canonicalize a property type for an optional member, stripping the implicit
+ * `| undefined` that TypeScript adds internally. The `?` modifier already
+ * communicates optionality; the extra `undefined` is noise in diffs.
+ */
+function canonicalizeOptionalPropType(
+  type: ts.Type,
+  checker: ts.TypeChecker,
+  depth: number,
+): string {
+  if (type.isUnion()) {
+    const nonUndef = type.types.filter(
+      (t) => !(t.flags & ts.TypeFlags.Undefined),
+    );
+    if (nonUndef.length === 0) return "undefined";
+    if (nonUndef.length === 1) return canonicalizeType(nonUndef[0], checker, depth);
+    const members = nonUndef
+      .map((t) => canonicalizeType(t, checker, depth + 1))
+      .sort();
+    return dedupeSorted(collapseBooleanLiterals(members)).join(" | ");
+  }
+  return canonicalizeType(type, checker, depth);
 }
 
 /** Remove duplicate adjacent entries from a sorted array. */
