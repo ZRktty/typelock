@@ -49,6 +49,25 @@ describe("extract", () => {
     });
   });
 
+  describe("edge cases", () => {
+    it("throws for a non-existent entry file", () => {
+      expect(() => extract({ entry: fx("does-not-exist.ts") })).toThrow();
+    });
+
+    it("returns an empty snapshot for a file with no exports", () => {
+      const snap = extract({ entry: fx("empty.ts") });
+      expect(snap.exports).toHaveLength(0);
+    });
+
+    it("captures string and number index signatures", () => {
+      const snap = extract({ entry: fx("index-sigs.ts") });
+      const stringMap = snap.exports.find((e) => e.name === "StringMap")!;
+      const numberMap = snap.exports.find((e) => e.name === "NumberMap")!;
+      expect(stringMap.signature).toContain("[key: string]");
+      expect(numberMap.signature).toContain("[key: number]");
+    });
+  });
+
   describe(".d.ts entry points", () => {
     it("expands interface members (not name-only)", () => {
       const snap = extract({ entry: fx("dts-lib.d.ts") });

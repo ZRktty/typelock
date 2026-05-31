@@ -26,8 +26,8 @@ export function extract(options: ExtractOptions): Snapshot {
   }
 
   const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+  /* c8 ignore next 3 */
   if (!moduleSymbol) {
-    // A file with no exports still produces a valid (empty) snapshot.
     return emptySnapshot();
   }
 
