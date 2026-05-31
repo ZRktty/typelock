@@ -82,7 +82,7 @@ To get there, typelock normalizes at the type-object level (not on rendered stri
 
 ## Known limitations (MVP)
 
-This is an early MVP. The following are out of scope for now: class static members, variance analysis at the parameter level (contravariant inputs vs covariant outputs), a `--check-semver` flag that validates against your `package.json` version bump, multi-entry-point / monorepo support, and a GitHub Action wrapper.
+This is an early MVP. The following are out of scope for now: class static members, full variance analysis at the parameter level (contravariant inputs vs covariant outputs — parameter type widening is flagged as breaking conservatively), a `--check-semver` flag that validates against your `package.json` version bump, multi-entry-point / monorepo support, and a GitHub Action wrapper.
 
 ## License
 
