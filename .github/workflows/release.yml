@@ -26,7 +26,6 @@ jobs:
         with:
           node-version: "22.14"  # semantic-release@25 requires ^22.14.0 || >=24.10.0
           cache: pnpm
-          registry-url: "https://registry.npmjs.org/"  # needed for @semantic-release/npm OIDC detection
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
@@ -38,10 +37,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Release
-        # @semantic-release/git is not bundled — install it alongside semantic-release
-        # NODE_AUTH_TOKEN is intentionally absent — setup-node sets it automatically
-        # via the id-token:write OIDC flow when registry-url is configured above.
-        # Explicitly setting it (even to a secret) would override that valid OIDC token.
         run: pnpm dlx --package=semantic-release --package=@semantic-release/git semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
