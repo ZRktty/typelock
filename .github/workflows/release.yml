@@ -26,7 +26,9 @@ jobs:
         with:
           node-version: "22.14"  # semantic-release@25 requires ^22.14.0 || >=24.10.0
           cache: pnpm
-          registry-url: "https://registry.npmjs.org/"
+          # No registry-url here — setup-node with registry-url creates an .npmrc
+          # that sets _authToken=${NODE_AUTH_TOKEN}, which conflicts with npm's native
+          # OIDC Trusted Publisher flow. Without it, npm exchanges the OIDC token itself.
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
