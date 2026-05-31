@@ -8,7 +8,7 @@ export function getLength<T>(value: T): number {
   return (value as { length: number }).length;
 }
 
-// Wrapper: second generic param added with default → safe for callers
+// Wrapper: second generic param added — structural shape gains 'meta' field → breaking
 export type Wrapper<T, U = string> = { value: T; meta: U };
 
 // Repository: unchanged
