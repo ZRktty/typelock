@@ -49,6 +49,55 @@ describe("extract", () => {
     });
   });
 
+  describe("export kinds", () => {
+    it("handles intersection type aliases", () => {
+      const snap = extract({ entry: fx("misc-exports.ts") });
+      const tagged = snap.exports.find((e) => e.name === "Tagged")!;
+      expect(tagged.signature).toMatch(/id.*string/);
+      expect(tagged.signature).toMatch(/tag.*number/);
+    });
+
+    it("handles enum exports", () => {
+      const snap = extract({ entry: fx("misc-exports.ts") });
+      const dir = snap.exports.find((e) => e.name === "Direction")!;
+      expect(dir).toBeDefined();
+      expect(dir.kind).toBe("enum");
+    });
+
+    it("handles namespace exports", () => {
+      const snap = extract({ entry: fx("misc-exports.ts") });
+      const utils = snap.exports.find((e) => e.name === "Utils")!;
+      expect(utils).toBeDefined();
+      expect(utils.kind).toBe("namespace");
+    });
+
+    it("handles const variable exports", () => {
+      const snap = extract({ entry: fx("misc-exports.ts") });
+      const max = snap.exports.find((e) => e.name === "MAX_SIZE")!;
+      expect(max).toBeDefined();
+      expect(max.signature).toBe("number");
+    });
+  });
+
+  describe("edge cases", () => {
+    it("throws for a non-existent entry file", () => {
+      expect(() => extract({ entry: fx("does-not-exist.ts") })).toThrow();
+    });
+
+    it("returns an empty snapshot for a file with no exports", () => {
+      const snap = extract({ entry: fx("empty.ts") });
+      expect(snap.exports).toHaveLength(0);
+    });
+
+    it("captures string and number index signatures", () => {
+      const snap = extract({ entry: fx("index-sigs.ts") });
+      const stringMap = snap.exports.find((e) => e.name === "StringMap")!;
+      const numberMap = snap.exports.find((e) => e.name === "NumberMap")!;
+      expect(stringMap.signature).toContain("[key: string]");
+      expect(numberMap.signature).toContain("[key: number]");
+    });
+  });
+
   describe(".d.ts entry points", () => {
     it("expands interface members (not name-only)", () => {
       const snap = extract({ entry: fx("dts-lib.d.ts") });
@@ -73,6 +122,69 @@ describe("extract", () => {
       const proc = snap.exports.find((e) => e.name === "Processor")!;
       expect(proc.signature).toMatch(/new\(/);
       expect(proc.signature).toMatch(/options/);
+    });
+  });
+
+  describe("generic types (1.2)", () => {
+    it("renders unconstrained generic function correctly", () => {
+      const snap = extract({ entry: fx("generics.ts") });
+      expect(snap.exports.find((e) => e.name === "identity")!.signature).toBe("<T>(value: T) => T");
+    });
+
+    it("renders constrained generic function correctly", () => {
+      const snap = extract({ entry: fx("generics.ts") });
+      const sig = snap.exports.find((e) => e.name === "getLength")!.signature;
+      // Use toMatch rather than toBe — TypeScript's pretty-printing of constraint
+      // object literals (trailing semicolons, spacing) can vary across TS versions.
+      expect(sig).toMatch(/^<T extends \{/);
+      expect(sig).toMatch(/length.*number/);
+      expect(sig).toMatch(/\(value: T\) => number$/);
+    });
+
+    it("renders generic interface correctly", () => {
+      const snap = extract({ entry: fx("generics.ts") });
+      const repo = snap.exports.find((e) => e.name === "Repository")!;
+      expect(repo.signature).toMatch(/find.*id.*string/);
+      expect(repo.signature).toMatch(/save.*item/);
+    });
+
+    it("keeps instantiated builtins as named leaves (no expansion)", () => {
+      const snap = extract({ entry: fx("generics.ts") });
+      expect(snap.exports.find((e) => e.name === "AsyncResult")!.signature).toBe("Promise<string>");
+    });
+
+    it("is deterministic across two runs on generic fixtures", () => {
+      const a = extract({ entry: fx("generics.ts") });
+      const b = extract({ entry: fx("generics.ts") });
+      expect(a.exports).toEqual(b.exports);
+    });
+
+    it("flags adding a generic constraint as breaking", () => {
+      const before = extract({ entry: fx("generics.ts") });
+      const after = extract({ entry: fx("generics-changed.ts") });
+      const change = diff(before, after).changed.find((c) => c.name === "identity")!;
+      expect(change).toBeDefined();
+      expect(change.breaking).toBe(true);
+    });
+
+    it("flags removing a generic constraint as breaking (conservative)", () => {
+      // Removing a constraint widens the accepted inputs and is semantically safe,
+      // but the classifier cannot prove subtype safety without full variance analysis.
+      const before = extract({ entry: fx("generics.ts") });
+      const after = extract({ entry: fx("generics-changed.ts") });
+      const change = diff(before, after).changed.find((c) => c.name === "getLength")!;
+      expect(change).toBeDefined();
+      expect(change.breaking).toBe(true);
+    });
+
+    it("flags adding a type param that changes the structural shape as breaking", () => {
+      // Wrapper<T> = { value: T } → Wrapper<T, U=string> = { value: T; meta: U }
+      // The structural shape gains a field, which is breaking regardless of the default.
+      const before = extract({ entry: fx("generics.ts") });
+      const after = extract({ entry: fx("generics-changed.ts") });
+      const change = diff(before, after).changed.find((c) => c.name === "Wrapper")!;
+      expect(change).toBeDefined();
+      expect(change.breaking).toBe(true);
     });
   });
 });
@@ -123,12 +235,49 @@ describe("diff", () => {
       const after = {
         formatVersion: 1 as const,
         typescriptVersion: "test",
-        exports: [{ name: "O", kind: "type-alias" as const, signature: "{ a: string; b?: number }" }],
+        exports: [
+          { name: "O", kind: "type-alias" as const, signature: "{ a: string; b?: number }" },
+        ],
       };
       const result = diff(before, after);
       const change = result.changed.find((c) => c.name === "O")!;
       expect(change).toBeDefined();
       expect(change.breaking).toBe(false);
+    });
+  });
+
+  describe("class static members", () => {
+    it("includes static methods, readonly properties, and optional statics in the snapshot", () => {
+      const snap = extract({ entry: fx("static-class.d.ts") });
+      const reg = snap.exports.find((e) => e.name === "Registry")!;
+      expect(reg.signature).toMatch(/static create/);
+      expect(reg.signature).toMatch(/static readonly DEFAULT_TTL/);
+      expect(reg.signature).toMatch(/static description\?/);
+    });
+
+    it("does not include the implicit prototype property", () => {
+      const snap = extract({ entry: fx("static-class.d.ts") });
+      const reg = snap.exports.find((e) => e.name === "Registry")!;
+      expect(reg.signature).not.toMatch(/prototype/);
+    });
+
+    it("flags a removed static method as breaking", () => {
+      const before = extract({ entry: fx("static-class-changed.d.ts") });
+      const after = extract({ entry: fx("static-class.d.ts") });
+      const result = diff(before, after);
+      const change = result.changed.find((c) => c.name === "Registry")!;
+      expect(change).toBeDefined();
+      expect(change.breaking).toBe(true);
+    });
+
+    it("detects an added static method as a change", () => {
+      const before = extract({ entry: fx("static-class.d.ts") });
+      const after = extract({ entry: fx("static-class-changed.d.ts") });
+      const result = diff(before, after);
+      // Addition is detected — previously it would pass silently.
+      // Conservative classifier flags it breaking; smarter static-aware
+      // classification is left for a future roadmap item.
+      expect(result.changed.find((c) => c.name === "Registry")).toBeDefined();
     });
   });
 
@@ -161,29 +310,44 @@ describe("diff", () => {
   describe("function signature classification", () => {
     describe("parameters", () => {
       it("adding an optional parameter is non-breaking", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, b?: number) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, b?: number) => void"),
+        );
         const change = result.changed.find((c) => c.name === "fn")!;
         expect(change).toBeDefined();
         expect(change.breaking).toBe(false);
       });
 
       it("adding a required parameter is breaking", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, b: number) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, b: number) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(true);
       });
 
       it("required → optional is non-breaking", () => {
-        const result = diff(fnSnap("(a: string, b: number) => void"), fnSnap("(a: string, b?: number) => void"));
+        const result = diff(
+          fnSnap("(a: string, b: number) => void"),
+          fnSnap("(a: string, b?: number) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(false);
       });
 
       it("removing a parameter is breaking", () => {
-        const result = diff(fnSnap("(a: string, b: number) => void"), fnSnap("(a: string) => void"));
+        const result = diff(
+          fnSnap("(a: string, b: number) => void"),
+          fnSnap("(a: string) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(true);
       });
 
       it("adding multiple optional parameters is non-breaking", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, b?: number, c?: boolean) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, b?: number, c?: boolean) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(false);
       });
     });
@@ -222,17 +386,26 @@ describe("diff", () => {
 
     describe("rest parameters", () => {
       it("adding an array rest param is non-breaking (inline T[] form)", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, ...args: number[]) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, ...args: number[]) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(false);
       });
 
       it("adding an array rest param is non-breaking (generic Array<T> form from extractor)", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, ...args: Array<number>) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, ...args: Array<number>) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(false);
       });
 
       it("adding a tuple rest param is breaking (has required elements)", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, ...args: [number]) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, ...args: [number]) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(true);
       });
     });

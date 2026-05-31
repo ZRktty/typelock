@@ -14,29 +14,22 @@ import ts from "typescript";
  * mis-handles nested unions like `(a | b)[]` and is the classic source of
  * false-positive diffs.
  */
-export function canonicalizeType(
-  type: ts.Type,
-  checker: ts.TypeChecker,
-  depth = 0,
-): string {
+export function canonicalizeType(type: ts.Type, checker: ts.TypeChecker, depth = 0): string {
   // Guard against pathological recursive types (e.g. type T = T[]).
+  /* c8 ignore next 2 */
   if (depth > 12) {
     return fallbackString(type, checker);
   }
 
   // --- Union: sort members, dedupe, collapse `false | true` → `boolean` ---
   if (type.isUnion()) {
-    const members = type.types
-      .map((t) => canonicalizeType(t, checker, depth + 1))
-      .sort();
+    const members = type.types.map((t) => canonicalizeType(t, checker, depth + 1)).sort();
     return dedupeSorted(collapseBooleanLiterals(members)).join(" | ");
   }
 
   // --- Intersection: sort members, dedupe, join with " & " ---
   if (type.isIntersection()) {
-    const members = type.types
-      .map((t) => canonicalizeType(t, checker, depth + 1))
-      .sort();
+    const members = type.types.map((t) => canonicalizeType(t, checker, depth + 1)).sort();
     return dedupeSorted(members).join(" & ");
   }
 
@@ -76,7 +69,7 @@ function fallbackString(type: ts.Type, checker: ts.TypeChecker): string {
  * declared in the user's own source (so we don't recursively expand Array,
  * Date, Promise, or anything from node_modules — those stay as named leaves).
  */
-function shouldExpandObject(type: ts.Type, checker: ts.TypeChecker): boolean {
+function shouldExpandObject(type: ts.Type, _checker: ts.TypeChecker): boolean {
   if (!(type.flags & ts.TypeFlags.Object)) return false;
   if (type.getCallSignatures().length > 0) return false;
   if (type.getConstructSignatures().length > 0) return false;
@@ -108,7 +101,35 @@ export function canonicalizeClassType(
   depth = 0,
 ): string {
   const ctorSigs = renderConstructorSigs(constructorType, checker, depth);
-  return canonicalizeObject(instanceType, checker, depth, ctorSigs);
+  const staticMembers = renderStaticMembers(constructorType, checker, depth);
+  return canonicalizeObject(instanceType, checker, depth, [...ctorSigs, ...staticMembers]);
+}
+
+function renderStaticMembers(
+  constructorType: ts.Type,
+  checker: ts.TypeChecker,
+  depth: number,
+): string[] {
+  // `prototype` is declared in user source (the class declaration itself) so
+  // isExternalFile won't catch it — exclude it explicitly.
+  const BUILTIN_CONSTRUCTOR_PROPS = new Set(["prototype"]);
+  const props = checker.getPropertiesOfType(constructorType).filter((prop) => {
+    if (BUILTIN_CONSTRUCTOR_PROPS.has(prop.getName())) return false;
+    const d = prop.valueDeclaration ?? prop.declarations?.[0];
+    if (!d) return false;
+    return !isExternalFile(d.getSourceFile());
+  });
+  return props.map((prop) => {
+    const decl = (prop.valueDeclaration ?? prop.declarations?.[0])!;
+    const propType = checker.getTypeOfSymbolAtLocation(prop, decl);
+    const isOptional = (prop.flags & ts.SymbolFlags.Optional) !== 0;
+    const optional = isOptional ? "?" : "";
+    const readonly = isReadonlyProp(prop) ? "readonly " : "";
+    const sig = isOptional
+      ? canonicalizeOptionalPropType(propType, checker, depth + 1)
+      : canonicalizeType(propType, checker, depth + 1);
+    return `static ${readonly}${prop.getName()}${optional}: ${sig}`;
+  });
 }
 
 function renderConstructorSigs(
@@ -179,19 +200,11 @@ function canonicalizeObject(
 function isReadonlyProp(prop: ts.Symbol): boolean {
   const decl = prop.declarations?.[0];
   if (!decl) return false;
-  const modifiers = ts.canHaveModifiers(decl)
-    ? ts.getModifiers(decl)
-    : undefined;
-  return (
-    modifiers?.some((m) => m.kind === ts.SyntaxKind.ReadonlyKeyword) ?? false
-  );
+  const modifiers = ts.canHaveModifiers(decl) ? ts.getModifiers(decl) : undefined;
+  return modifiers?.some((m) => m.kind === ts.SyntaxKind.ReadonlyKeyword) ?? false;
 }
 
-function renderIndexSignatures(
-  type: ts.Type,
-  checker: ts.TypeChecker,
-  depth: number,
-): string[] {
+function renderIndexSignatures(type: ts.Type, checker: ts.TypeChecker, depth: number): string[] {
   const out: string[] = [];
   const stringIndex = type.getStringIndexType();
   if (stringIndex) {
@@ -226,16 +239,13 @@ function canonicalizeOptionalPropType(
   depth: number,
 ): string {
   if (type.isUnion()) {
-    const nonUndef = type.types.filter(
-      (t) => !(t.flags & ts.TypeFlags.Undefined),
-    );
+    const nonUndef = type.types.filter((t) => !(t.flags & ts.TypeFlags.Undefined));
     if (nonUndef.length === 0) return "undefined";
     if (nonUndef.length === 1) return canonicalizeType(nonUndef[0], checker, depth);
-    const members = nonUndef
-      .map((t) => canonicalizeType(t, checker, depth + 1))
-      .sort();
+    const members = nonUndef.map((t) => canonicalizeType(t, checker, depth + 1)).sort();
     return dedupeSorted(collapseBooleanLiterals(members)).join(" | ");
   }
+  /* c8 ignore next */
   return canonicalizeType(type, checker, depth);
 }
 

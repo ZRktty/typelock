@@ -3,5 +3,5 @@ export interface Widget {
   label: string;
 }
 export function makeWidget(id: string): Widget {
-  return { id, label: '' };
+  return { id, label: "" };
 }
