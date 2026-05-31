@@ -37,12 +37,21 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Exchange GitHub OIDC token for npm granular access token
+        run: |
+          OIDC_TOKEN=$(curl --silent --fail \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm" | jq -r .value)
+          NPM_TOKEN=$(curl --silent --fail -X POST \
+            "https://registry.npmjs.org/-/v1/login/oidc/token" \
+            -H "Content-Type: application/json" \
+            -d "{\"oidcToken\":\"${OIDC_TOKEN}\"}" | jq -r .token)
+          echo "::add-mask::${NPM_TOKEN}"
+          echo "NODE_AUTH_TOKEN=${NPM_TOKEN}" >> "${GITHUB_ENV}"
+
       - name: Release
         # @semantic-release/git is not bundled — install it alongside semantic-release
         run: pnpm dlx --package=semantic-release --package=@semantic-release/git semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Clear setup-node's NODE_AUTH_TOKEN (GitHub OIDC token, not an npm token)
-          # so it doesn't override the npm token @semantic-release/npm exchanges via OIDC.
-          NODE_AUTH_TOKEN: ""
           NPM_CONFIG_PROVENANCE: "true"
