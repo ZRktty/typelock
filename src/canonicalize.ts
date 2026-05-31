@@ -117,7 +117,11 @@ function renderStaticMembers(
   checker: ts.TypeChecker,
   depth: number,
 ): string[] {
+  // `prototype` is declared in user source (the class declaration itself) so
+  // isExternalFile won't catch it — exclude it explicitly.
+  const BUILTIN_CONSTRUCTOR_PROPS = new Set(["prototype"]);
   const props = checker.getPropertiesOfType(constructorType).filter((prop) => {
+    if (BUILTIN_CONSTRUCTOR_PROPS.has(prop.getName())) return false;
     const d = prop.valueDeclaration ?? prop.declarations?.[0];
     if (!d) return false;
     return !isExternalFile(d.getSourceFile());

@@ -140,6 +140,12 @@ describe("diff", () => {
       expect(reg.signature).toMatch(/static readonly DEFAULT_TTL/);
     });
 
+    it("does not include the implicit prototype property", () => {
+      const snap = extract({ entry: fx("static-class.d.ts") });
+      const reg = snap.exports.find((e) => e.name === "Registry")!;
+      expect(reg.signature).not.toMatch(/prototype/);
+    });
+
     it("flags a removed static method as breaking", () => {
       const before = extract({ entry: fx("static-class-changed.d.ts") });
       const after = extract({ entry: fx("static-class.d.ts") });
