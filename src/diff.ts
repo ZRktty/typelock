@@ -183,6 +183,7 @@ function parseFunctionSig(sig: string): { params: string[]; returnType: string }
     const ch = trimmed[i];
     if (ch === "(" || ch === "[" || ch === "{" || ch === "<") depth++;
     else if (ch === ")" || ch === "]" || ch === "}" || ch === ">") {
+      if (ch === ">" && i > 0 && trimmed[i - 1] === "=") continue; // part of `=>`, not a generic closer
       depth--;
       if (depth === 0) { closeParen = i; break; }
     }
@@ -201,9 +202,10 @@ function parseFunctionSig(sig: string): { params: string[]; returnType: string }
   return { params, returnType };
 }
 
-/** True if the parameter has the `name?: Type` shape. */
+/** True if the parameter is optional: `name?: Type` shape or a rest param (`...name: Type`). */
 function isOptionalParam(param: string): boolean {
-  return /^[\w$]+\?:/.test(param.trim());
+  const p = param.trim();
+  return /^[\w$]+\?:/.test(p) || p.startsWith("...");
 }
 
 /** True if `after` is `before` with `name:` → `name?:` and nothing else changed. */
@@ -238,15 +240,19 @@ function splitTopLevel(s: string, sep: string): string[] {
   const out: string[] = [];
   let depth = 0;
   let buf = "";
+  let prev = "";
   for (const ch of s) {
     if (ch === "(" || ch === "[" || ch === "{" || ch === "<") depth++;
-    else if (ch === ")" || ch === "]" || ch === "}" || ch === ">") depth--;
+    else if (ch === ")" || ch === "]" || ch === "}" || ch === ">") {
+      if (ch !== ">" || prev !== "=") depth--; // skip `>` that is part of `=>`
+    }
     if (ch === sep && depth === 0) {
       out.push(buf);
       buf = "";
     } else {
       buf += ch;
     }
+    prev = ch;
   }
   if (buf.trim()) out.push(buf);
   return out;

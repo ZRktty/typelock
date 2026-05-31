@@ -243,3 +243,23 @@ describe("diff", () => {
     });
   });
 });
+
+test("higher-order function: adding optional callback param is non-breaking", () => {
+  const result = diff(
+    fnSnap("(cb: (x: string) => void) => void"),
+    fnSnap("(cb: (x: string) => void, opts?: { timeout: number }) => void"),
+  );
+  const change = result.changed.find((c) => c.name === "fn");
+  assert.ok(change, "should register a change");
+  assert.equal(change.breaking, false, "added optional param on HOF is non-breaking");
+});
+
+test("adding a rest parameter is non-breaking", () => {
+  const result = diff(
+    fnSnap("(a: string) => void"),
+    fnSnap("(a: string, ...args: number[]) => void"),
+  );
+  const change = result.changed.find((c) => c.name === "fn");
+  assert.ok(change, "should register a change");
+  assert.equal(change.breaking, false, "added rest param is non-breaking");
+});
