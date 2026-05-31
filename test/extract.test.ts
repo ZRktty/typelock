@@ -75,6 +75,66 @@ describe("extract", () => {
       expect(proc.signature).toMatch(/options/);
     });
   });
+
+  describe("generic types (1.2)", () => {
+    it("renders unconstrained generic function correctly", () => {
+      const snap = extract({ entry: fx("generics.ts") });
+      expect(snap.exports.find((e) => e.name === "identity")!.signature).toBe("<T>(value: T) => T");
+    });
+
+    it("renders constrained generic function correctly", () => {
+      const snap = extract({ entry: fx("generics.ts") });
+      expect(snap.exports.find((e) => e.name === "getLength")!.signature).toBe(
+        "<T extends { length: number; }>(value: T) => number",
+      );
+    });
+
+    it("renders generic interface correctly", () => {
+      const snap = extract({ entry: fx("generics.ts") });
+      const repo = snap.exports.find((e) => e.name === "Repository")!;
+      expect(repo.signature).toMatch(/find.*id.*string/);
+      expect(repo.signature).toMatch(/save.*item/);
+    });
+
+    it("keeps instantiated builtins as named leaves (no expansion)", () => {
+      const snap = extract({ entry: fx("generics.ts") });
+      expect(snap.exports.find((e) => e.name === "AsyncResult")!.signature).toBe("Promise<string>");
+    });
+
+    it("is deterministic across two runs on generic fixtures", () => {
+      const a = extract({ entry: fx("generics.ts") });
+      const b = extract({ entry: fx("generics.ts") });
+      expect(a.exports).toEqual(b.exports);
+    });
+
+    it("flags adding a generic constraint as breaking", () => {
+      const before = extract({ entry: fx("generics.ts") });
+      const after = extract({ entry: fx("generics-changed.ts") });
+      const change = diff(before, after).changed.find((c) => c.name === "identity")!;
+      expect(change).toBeDefined();
+      expect(change.breaking).toBe(true);
+    });
+
+    it("flags removing a generic constraint as breaking (conservative)", () => {
+      // Removing a constraint widens the accepted inputs and is semantically safe,
+      // but the classifier cannot prove subtype safety without full variance analysis.
+      const before = extract({ entry: fx("generics.ts") });
+      const after = extract({ entry: fx("generics-changed.ts") });
+      const change = diff(before, after).changed.find((c) => c.name === "getLength")!;
+      expect(change).toBeDefined();
+      expect(change.breaking).toBe(true);
+    });
+
+    it("flags adding a type param that changes the structural shape as breaking", () => {
+      // Wrapper<T> = { value: T } → Wrapper<T, U=string> = { value: T; meta: U }
+      // The structural shape gains a field, which is breaking regardless of the default.
+      const before = extract({ entry: fx("generics.ts") });
+      const after = extract({ entry: fx("generics-changed.ts") });
+      const change = diff(before, after).changed.find((c) => c.name === "Wrapper")!;
+      expect(change).toBeDefined();
+      expect(change.breaking).toBe(true);
+    });
+  });
 });
 
 // ── format ────────────────────────────────────────────────────────────────────
