@@ -26,9 +26,7 @@ jobs:
         with:
           node-version: "22.14"  # semantic-release@25 requires ^22.14.0 || >=24.10.0
           cache: pnpm
-          # No registry-url — setup-node with registry-url creates an .npmrc that sets
-          # _authToken=${NODE_AUTH_TOKEN}, conflicting with npm's native OIDC Trusted
-          # Publisher flow. Without it, npm exchanges the OIDC token itself.
+          registry-url: "https://registry.npmjs.org/"  # needed for @semantic-release/npm OIDC detection
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
@@ -44,7 +42,7 @@ jobs:
         run: pnpm dlx --package=semantic-release --package=@semantic-release/git semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # No NPM_TOKEN needed — npm Trusted Publisher (OIDC) authenticates via
-          # the id-token:write permission above. registry-url in setup-node wires
-          # up the .npmrc; npm exchanges the OIDC token at publish time.
+          # Clear setup-node's NODE_AUTH_TOKEN (GitHub OIDC token, not an npm token)
+          # so it doesn't override the npm token @semantic-release/npm exchanges via OIDC.
+          NODE_AUTH_TOKEN: ""
           NPM_CONFIG_PROVENANCE: "true"
