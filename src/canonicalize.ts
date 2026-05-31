@@ -120,7 +120,7 @@ function renderStaticMembers(
     return !isExternalFile(d.getSourceFile());
   });
   return props.map((prop) => {
-    const decl = prop.valueDeclaration ?? prop.declarations?.[0]!;
+    const decl = (prop.valueDeclaration ?? prop.declarations?.[0])!;
     const propType = checker.getTypeOfSymbolAtLocation(prop, decl);
     const isOptional = (prop.flags & ts.SymbolFlags.Optional) !== 0;
     const optional = isOptional ? "?" : "";

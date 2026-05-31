@@ -30,6 +30,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
+      - run: pnpm test
 
       - name: Configure git identity for release commit
         run: |
@@ -37,7 +38,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Release
-        run: pnpm dlx semantic-release
+        # @semantic-release/git is not bundled — install it alongside semantic-release
+        run: pnpm dlx --package=semantic-release --package=@semantic-release/git semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # No NPM_TOKEN needed — npm Trusted Publisher (OIDC) authenticates via
