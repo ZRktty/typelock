@@ -39,8 +39,10 @@ jobs:
 
       - name: Release
         # @semantic-release/git is not bundled — install it alongside semantic-release
+        # NODE_AUTH_TOKEN is intentionally absent — setup-node sets it automatically
+        # via the id-token:write OIDC flow when registry-url is configured above.
+        # Explicitly setting it (even to a secret) would override that valid OIDC token.
         run: pnpm dlx --package=semantic-release --package=@semantic-release/git semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
