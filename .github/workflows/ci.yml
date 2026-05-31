@@ -16,14 +16,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
-      - run: npm run build
-      - run: npm run coverage
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm run coverage
 
       - name: Upload coverage to Codecov
         if: matrix.node == 22

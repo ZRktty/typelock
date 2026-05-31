@@ -46,14 +46,15 @@
   "engines": {
     "node": ">=18"
   },
+  "packageManager": "pnpm@11.3.0",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "postbuild": "chmod +x dist/cli.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "prepublishOnly": "npm run build",
-    "publish:npm": "npm publish --access public"
+    "prepublishOnly": "pnpm run build",
+    "publish:npm": "pnpm publish --access public"
   },
   "peerDependencies": {
     "typescript": ">=4.7"
