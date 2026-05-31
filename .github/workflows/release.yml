@@ -39,11 +39,12 @@ jobs:
 
       - name: Exchange GitHub OIDC token for npm granular access token
         run: |
+          set -euo pipefail
           OIDC_TOKEN=$(curl --silent --fail \
             -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm" | jq -r .value)
           NPM_TOKEN=$(curl --silent --fail -X POST \
-            "https://registry.npmjs.org/-/v1/login/oidc/token" \
+            "https://registry.npmjs.org/-/v1/login/oidc" \
             -H "Content-Type: application/json" \
             -d "{\"oidcToken\":\"${OIDC_TOKEN}\"}" | jq -r .token)
           echo "::add-mask::${NPM_TOKEN}"
