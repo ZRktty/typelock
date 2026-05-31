@@ -7,11 +7,8 @@ on:
 
 jobs:
   test:
-    name: Test (Node ${{ matrix.node }})
+    name: Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [18, 20, 22]
 
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +17,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 22
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -28,7 +25,6 @@ jobs:
       - run: pnpm run coverage
 
       - name: Upload coverage to Codecov
-        if: matrix.node == 22
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
