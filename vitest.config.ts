@@ -11,6 +11,7 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**"],
       exclude: ["src/cli.ts"], // CLI entry point — tested via integration, not unit tests
+      reporter: ["text", "json", "html"],
       thresholds: { lines: 80 },
     },
   },

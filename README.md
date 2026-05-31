@@ -1,5 +1,9 @@
 # typelock
 
+[![CI](https://github.com/ZRktty/typelock/actions/workflows/ci.yml/badge.svg)](https://github.com/ZRktty/typelock/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/ZRktty/typelock/branch/main/graph/badge.svg)](https://codecov.io/gh/ZRktty/typelock)
+[![npm](https://img.shields.io/npm/v/@zrktty/typelock)](https://www.npmjs.com/package/@zrktty/typelock)
+
 > Lock your TypeScript API. Ship with confidence.
 
 `typelock` creates snapshots of your TypeScript public type surface — the way Jest snapshots catch accidental value changes — commits them as a diffable baseline, and fails CI when the surface changes unexpectedly.
