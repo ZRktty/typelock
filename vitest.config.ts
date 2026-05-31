@@ -7,5 +7,11 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    coverage: {
+      provider: "v8",
+      include: ["src/**"],
+      exclude: ["src/cli.ts"], // CLI entry point — tested via integration, not unit tests
+      thresholds: { lines: 80 },
+    },
   },
 });
