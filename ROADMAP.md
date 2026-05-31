@@ -57,7 +57,7 @@ Rules applied: appending optional params → safe; required param → optional �
 - ✓ Adding an optional parameter to a function does not flag as breaking
 - ✓ Removing a required parameter does not flag as safe
 - ✓ All 13 pre-existing tests continue to pass
-- ✓ 8 new tests cover the full case matrix (21 total)
+- ✓ 12 new tests cover the full case matrix (25 total)
 
 ### 1.2 Generic type handling
 

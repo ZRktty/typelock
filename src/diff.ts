@@ -206,11 +206,12 @@ function parseFunctionSig(sig: string): { params: string[]; returnType: string }
 function isOptionalParam(param: string): boolean {
   const p = param.trim();
   if (/^[\w$]+\?:/.test(p)) return true;
-  // Rest params are optional only when the type is an array (zero-or-more).
+  // Rest params are optional only when the type is a zero-or-more array.
   // Tuple rest params like `...args: [number]` have required elements and are NOT optional.
+  // The extractor may render as `T[]` (inline) or `Array<T>` (WriteArrayAsGenericType flag).
   if (p.startsWith("...")) {
     const type = p.replace(/^\.\.\.[\w$]+\??\s*:\s*/, "");
-    return type.endsWith("[]");
+    return type.endsWith("[]") || /^Array</.test(type);
   }
   return false;
 }

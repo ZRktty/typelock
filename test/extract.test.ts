@@ -221,8 +221,13 @@ describe("diff", () => {
     });
 
     describe("rest parameters", () => {
-      it("adding an array rest param is non-breaking", () => {
+      it("adding an array rest param is non-breaking (inline T[] form)", () => {
         const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, ...args: number[]) => void"));
+        expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(false);
+      });
+
+      it("adding an array rest param is non-breaking (generic Array<T> form from extractor)", () => {
+        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, ...args: Array<number>) => void"));
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(false);
       });
 
