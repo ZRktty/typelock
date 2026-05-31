@@ -40,5 +40,7 @@ jobs:
         run: pnpm dlx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # No NPM_TOKEN needed — npm Trusted Publisher (OIDC) authenticates via
+          # the id-token:write permission above. registry-url in setup-node wires
+          # up the .npmrc; npm exchanges the OIDC token at publish time.
           NPM_CONFIG_PROVENANCE: "true"
