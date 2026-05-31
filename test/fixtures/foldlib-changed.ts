@@ -1,5 +1,5 @@
 export function fold(input: string): string {
-  return input.normalize('NFD');
+  return input.normalize("NFD");
 }
 export interface FoldOptions {
   preserveCase?: boolean;

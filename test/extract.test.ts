@@ -123,7 +123,9 @@ describe("diff", () => {
       const after = {
         formatVersion: 1 as const,
         typescriptVersion: "test",
-        exports: [{ name: "O", kind: "type-alias" as const, signature: "{ a: string; b?: number }" }],
+        exports: [
+          { name: "O", kind: "type-alias" as const, signature: "{ a: string; b?: number }" },
+        ],
       };
       const result = diff(before, after);
       const change = result.changed.find((c) => c.name === "O")!;
@@ -161,29 +163,44 @@ describe("diff", () => {
   describe("function signature classification", () => {
     describe("parameters", () => {
       it("adding an optional parameter is non-breaking", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, b?: number) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, b?: number) => void"),
+        );
         const change = result.changed.find((c) => c.name === "fn")!;
         expect(change).toBeDefined();
         expect(change.breaking).toBe(false);
       });
 
       it("adding a required parameter is breaking", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, b: number) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, b: number) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(true);
       });
 
       it("required → optional is non-breaking", () => {
-        const result = diff(fnSnap("(a: string, b: number) => void"), fnSnap("(a: string, b?: number) => void"));
+        const result = diff(
+          fnSnap("(a: string, b: number) => void"),
+          fnSnap("(a: string, b?: number) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(false);
       });
 
       it("removing a parameter is breaking", () => {
-        const result = diff(fnSnap("(a: string, b: number) => void"), fnSnap("(a: string) => void"));
+        const result = diff(
+          fnSnap("(a: string, b: number) => void"),
+          fnSnap("(a: string) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(true);
       });
 
       it("adding multiple optional parameters is non-breaking", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, b?: number, c?: boolean) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, b?: number, c?: boolean) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(false);
       });
     });
@@ -222,17 +239,26 @@ describe("diff", () => {
 
     describe("rest parameters", () => {
       it("adding an array rest param is non-breaking (inline T[] form)", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, ...args: number[]) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, ...args: number[]) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(false);
       });
 
       it("adding an array rest param is non-breaking (generic Array<T> form from extractor)", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, ...args: Array<number>) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, ...args: Array<number>) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(false);
       });
 
       it("adding a tuple rest param is breaking (has required elements)", () => {
-        const result = diff(fnSnap("(a: string) => void"), fnSnap("(a: string, ...args: [number]) => void"));
+        const result = diff(
+          fnSnap("(a: string) => void"),
+          fnSnap("(a: string, ...args: [number]) => void"),
+        );
         expect(result.changed.find((c) => c.name === "fn")!.breaking).toBe(true);
       });
     });

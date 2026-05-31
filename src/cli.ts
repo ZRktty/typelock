@@ -70,9 +70,7 @@ function main(): void {
 
   if (args.update) {
     fs.writeFileSync(snapPath, serialize(current), "utf8");
-    process.stdout.write(
-      `✓ Wrote ${current.exports.length} exports to ${args.snapfile}\n`,
-    );
+    process.stdout.write(`✓ Wrote ${current.exports.length} exports to ${args.snapfile}\n`);
     process.exit(0);
   }
 

@@ -14,11 +14,7 @@ import ts from "typescript";
  * mis-handles nested unions like `(a | b)[]` and is the classic source of
  * false-positive diffs.
  */
-export function canonicalizeType(
-  type: ts.Type,
-  checker: ts.TypeChecker,
-  depth = 0,
-): string {
+export function canonicalizeType(type: ts.Type, checker: ts.TypeChecker, depth = 0): string {
   // Guard against pathological recursive types (e.g. type T = T[]).
   if (depth > 12) {
     return fallbackString(type, checker);
@@ -26,17 +22,13 @@ export function canonicalizeType(
 
   // --- Union: sort members, dedupe, collapse `false | true` → `boolean` ---
   if (type.isUnion()) {
-    const members = type.types
-      .map((t) => canonicalizeType(t, checker, depth + 1))
-      .sort();
+    const members = type.types.map((t) => canonicalizeType(t, checker, depth + 1)).sort();
     return dedupeSorted(collapseBooleanLiterals(members)).join(" | ");
   }
 
   // --- Intersection: sort members, dedupe, join with " & " ---
   if (type.isIntersection()) {
-    const members = type.types
-      .map((t) => canonicalizeType(t, checker, depth + 1))
-      .sort();
+    const members = type.types.map((t) => canonicalizeType(t, checker, depth + 1)).sort();
     return dedupeSorted(members).join(" & ");
   }
 
@@ -76,7 +68,7 @@ function fallbackString(type: ts.Type, checker: ts.TypeChecker): string {
  * declared in the user's own source (so we don't recursively expand Array,
  * Date, Promise, or anything from node_modules — those stay as named leaves).
  */
-function shouldExpandObject(type: ts.Type, checker: ts.TypeChecker): boolean {
+function shouldExpandObject(type: ts.Type, _checker: ts.TypeChecker): boolean {
   if (!(type.flags & ts.TypeFlags.Object)) return false;
   if (type.getCallSignatures().length > 0) return false;
   if (type.getConstructSignatures().length > 0) return false;
@@ -179,19 +171,11 @@ function canonicalizeObject(
 function isReadonlyProp(prop: ts.Symbol): boolean {
   const decl = prop.declarations?.[0];
   if (!decl) return false;
-  const modifiers = ts.canHaveModifiers(decl)
-    ? ts.getModifiers(decl)
-    : undefined;
-  return (
-    modifiers?.some((m) => m.kind === ts.SyntaxKind.ReadonlyKeyword) ?? false
-  );
+  const modifiers = ts.canHaveModifiers(decl) ? ts.getModifiers(decl) : undefined;
+  return modifiers?.some((m) => m.kind === ts.SyntaxKind.ReadonlyKeyword) ?? false;
 }
 
-function renderIndexSignatures(
-  type: ts.Type,
-  checker: ts.TypeChecker,
-  depth: number,
-): string[] {
+function renderIndexSignatures(type: ts.Type, checker: ts.TypeChecker, depth: number): string[] {
   const out: string[] = [];
   const stringIndex = type.getStringIndexType();
   if (stringIndex) {
@@ -226,14 +210,10 @@ function canonicalizeOptionalPropType(
   depth: number,
 ): string {
   if (type.isUnion()) {
-    const nonUndef = type.types.filter(
-      (t) => !(t.flags & ts.TypeFlags.Undefined),
-    );
+    const nonUndef = type.types.filter((t) => !(t.flags & ts.TypeFlags.Undefined));
     if (nonUndef.length === 0) return "undefined";
     if (nonUndef.length === 1) return canonicalizeType(nonUndef[0], checker, depth);
-    const members = nonUndef
-      .map((t) => canonicalizeType(t, checker, depth + 1))
-      .sort();
+    const members = nonUndef.map((t) => canonicalizeType(t, checker, depth + 1)).sort();
     return dedupeSorted(collapseBooleanLiterals(members)).join(" | ");
   }
   return canonicalizeType(type, checker, depth);
