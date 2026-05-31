@@ -6,6 +6,8 @@
 
 > Lock your TypeScript API. Ship with confidence.
 
+**Built for library authors.** If other projects install your package and import your TypeScript types, typelock protects them. If your project is a backend application whose contract is an HTTP interface rather than published types, this probably isn't the right tool — though it works fine for shared `@company/types` packages used for frontend/backend type sharing.
+
 `typelock` creates snapshots of your TypeScript public type surface — the way Jest snapshots catch accidental value changes — commits them as a diffable baseline, and fails CI when the surface changes unexpectedly.
 
 A refactor that changes **no runtime behavior** can still break downstream consumers at the type level. Your unit tests stay green, `tsc` stays green, the build passes — and a patch release silently breaks someone.
