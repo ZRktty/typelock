@@ -60,12 +60,14 @@
     "format": "prettier --write src/ test/",
     "format:check": "prettier --check src/ test/",
     "prepublishOnly": "pnpm run build",
-    "publish:npm": "pnpm publish --access public"
+    "publish:npm": "pnpm publish --access public",
+    "semantic-release": "semantic-release"
   },
   "peerDependencies": {
     "typescript": ">=4.7"
   },
   "devDependencies": {
+    "@semantic-release/git": "^10.0.1",
     "@types/node": "^20.0.0",
     "@vitest/coverage-v8": "^4.1.7",
     "eslint": "^10.4.1",
@@ -73,6 +75,7 @@
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.60.0",
+    "semantic-release": "^25.0.3",
     "vitest": "^4.1.7"
   }
 }
