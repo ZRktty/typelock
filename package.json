@@ -1,6 +1,6 @@
 {
   "name": "@zrktty/typelock",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Lock your TypeScript API. Ship with confidence. Creates snapshots of your public type surface and fails CI when the surface changes unexpectedly — the way Jest snapshots catch accidental value changes.",
   "keywords": [
     "typescript",
