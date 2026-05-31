@@ -26,6 +26,7 @@ jobs:
         with:
           node-version: "22.14"  # semantic-release@25 requires ^22.14.0 || >=24.10.0
           cache: pnpm
+          registry-url: 'https://registry.npmjs.org/'
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
@@ -37,7 +38,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Release
-        run: pnpm dlx --package=semantic-release --package=@semantic-release/git semantic-release
+        run: pnpm run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
