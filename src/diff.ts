@@ -202,10 +202,17 @@ function parseFunctionSig(sig: string): { params: string[]; returnType: string }
   return { params, returnType };
 }
 
-/** True if the parameter is optional: `name?: Type` shape or a rest param (`...name: Type`). */
+/** True if the parameter is optional: `name?: Type` shape or a rest param with an array type. */
 function isOptionalParam(param: string): boolean {
   const p = param.trim();
-  return /^[\w$]+\?:/.test(p) || p.startsWith("...");
+  if (/^[\w$]+\?:/.test(p)) return true;
+  // Rest params are optional only when the type is an array (zero-or-more).
+  // Tuple rest params like `...args: [number]` have required elements and are NOT optional.
+  if (p.startsWith("...")) {
+    const type = p.replace(/^\.\.\.[\w$]+\??\s*:\s*/, "");
+    return type.endsWith("[]");
+  }
+  return false;
 }
 
 /** True if `after` is `before` with `name:` → `name?:` and nothing else changed. */
@@ -218,8 +225,13 @@ function isParamRequiredToOptional(before: string, after: string): boolean {
  * True if `before` and `after` are the same param name but the object type in
  * `after` has only gained optional members (e.g. `opts: { x: string }` →
  * `opts: { x: string; y?: number }`).
+ *
+ * The param's own optionality must not decrease: optional→required is breaking
+ * even when the object shape only gains optional fields.
  */
 function isParamObjectTypeExpanded(before: string, after: string): boolean {
+  const isOptional = (param: string) => /^[\w$]+\?:/.test(param.trim());
+  if (isOptional(before) && !isOptional(after)) return false; // optional→required is breaking
   const typeOf = (param: string) => param.trim().replace(/^[\w$]+\??\s*:\s*/, "");
   return isPurelyAddedOptional(typeOf(before), typeOf(after));
 }
