@@ -133,11 +133,12 @@ describe("diff", () => {
   });
 
   describe("class static members", () => {
-    it("includes static methods and properties in the snapshot", () => {
+    it("includes static methods, readonly properties, and optional statics in the snapshot", () => {
       const snap = extract({ entry: fx("static-class.d.ts") });
       const reg = snap.exports.find((e) => e.name === "Registry")!;
       expect(reg.signature).toMatch(/static create/);
       expect(reg.signature).toMatch(/static readonly DEFAULT_TTL/);
+      expect(reg.signature).toMatch(/static description\?/);
     });
 
     it("does not include the implicit prototype property", () => {
