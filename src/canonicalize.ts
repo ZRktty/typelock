@@ -108,7 +108,31 @@ export function canonicalizeClassType(
   depth = 0,
 ): string {
   const ctorSigs = renderConstructorSigs(constructorType, checker, depth);
-  return canonicalizeObject(instanceType, checker, depth, ctorSigs);
+  const staticMembers = renderStaticMembers(constructorType, checker, depth);
+  return canonicalizeObject(instanceType, checker, depth, [...ctorSigs, ...staticMembers]);
+}
+
+function renderStaticMembers(
+  constructorType: ts.Type,
+  checker: ts.TypeChecker,
+  depth: number,
+): string[] {
+  const props = checker.getPropertiesOfType(constructorType).filter((prop) => {
+    const d = prop.valueDeclaration ?? prop.declarations?.[0];
+    if (!d) return false;
+    return !isExternalFile(d.getSourceFile());
+  });
+  return props.map((prop) => {
+    const decl = prop.valueDeclaration ?? prop.declarations?.[0]!;
+    const propType = checker.getTypeOfSymbolAtLocation(prop, decl);
+    const isOptional = (prop.flags & ts.SymbolFlags.Optional) !== 0;
+    const optional = isOptional ? "?" : "";
+    const readonly = isReadonlyProp(prop) ? "readonly " : "";
+    const sig = isOptional
+      ? canonicalizeOptionalPropType(propType, checker, depth + 1)
+      : canonicalizeType(propType, checker, depth + 1);
+    return `static ${readonly}${prop.getName()}${optional}: ${sig}`;
+  });
 }
 
 function renderConstructorSigs(

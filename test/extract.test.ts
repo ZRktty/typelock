@@ -132,6 +132,34 @@ describe("diff", () => {
     });
   });
 
+  describe("class static members", () => {
+    it("includes static methods and properties in the snapshot", () => {
+      const snap = extract({ entry: fx("static-class.d.ts") });
+      const reg = snap.exports.find((e) => e.name === "Registry")!;
+      expect(reg.signature).toMatch(/static create/);
+      expect(reg.signature).toMatch(/static readonly DEFAULT_TTL/);
+    });
+
+    it("flags a removed static method as breaking", () => {
+      const before = extract({ entry: fx("static-class-changed.d.ts") });
+      const after = extract({ entry: fx("static-class.d.ts") });
+      const result = diff(before, after);
+      const change = result.changed.find((c) => c.name === "Registry")!;
+      expect(change).toBeDefined();
+      expect(change.breaking).toBe(true);
+    });
+
+    it("detects an added static method as a change", () => {
+      const before = extract({ entry: fx("static-class.d.ts") });
+      const after = extract({ entry: fx("static-class-changed.d.ts") });
+      const result = diff(before, after);
+      // Addition is detected — previously it would pass silently.
+      // Conservative classifier flags it breaking; smarter static-aware
+      // classification is left for a future roadmap item.
+      expect(result.changed.find((c) => c.name === "Registry")).toBeDefined();
+    });
+  });
+
   describe("class and interface changes", () => {
     it("detects an interface member addition", () => {
       const before = extract({ entry: fx("dts-lib.d.ts") });
