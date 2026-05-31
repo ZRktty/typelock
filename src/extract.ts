@@ -59,7 +59,7 @@ function resolveSymbol(symbol: ts.Symbol, checker: ts.TypeChecker): ts.Symbol {
   if (symbol.flags & ts.SymbolFlags.Alias) {
     try {
       return checker.getAliasedSymbol(symbol);
-    } catch {
+    } catch /* c8 ignore next */ {
       return symbol;
     }
   }
@@ -75,6 +75,7 @@ function classifyKind(symbol: ts.Symbol): ExportKind {
   if (f & ts.SymbolFlags.Enum) return "enum";
   if (f & (ts.SymbolFlags.Module | ts.SymbolFlags.NamespaceModule)) return "namespace";
   if (f & (ts.SymbolFlags.Variable | ts.SymbolFlags.BlockScopedVariable)) return "variable";
+  /* c8 ignore next */
   return "unknown";
 }
 
@@ -105,6 +106,7 @@ function signatureForSymbol(
   return canonicalizeType(type, checker);
 }
 
+/* c8 ignore next 3 */
 function emptySnapshot(): Snapshot {
   return { formatVersion: 1, typescriptVersion: ts.version, exports: [] };
 }

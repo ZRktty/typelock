@@ -49,6 +49,36 @@ describe("extract", () => {
     });
   });
 
+  describe("export kinds", () => {
+    it("handles intersection type aliases", () => {
+      const snap = extract({ entry: fx("misc-exports.ts") });
+      const tagged = snap.exports.find((e) => e.name === "Tagged")!;
+      expect(tagged.signature).toMatch(/id.*string/);
+      expect(tagged.signature).toMatch(/tag.*number/);
+    });
+
+    it("handles enum exports", () => {
+      const snap = extract({ entry: fx("misc-exports.ts") });
+      const dir = snap.exports.find((e) => e.name === "Direction")!;
+      expect(dir).toBeDefined();
+      expect(dir.kind).toBe("enum");
+    });
+
+    it("handles namespace exports", () => {
+      const snap = extract({ entry: fx("misc-exports.ts") });
+      const utils = snap.exports.find((e) => e.name === "Utils")!;
+      expect(utils).toBeDefined();
+      expect(utils.kind).toBe("namespace");
+    });
+
+    it("handles const variable exports", () => {
+      const snap = extract({ entry: fx("misc-exports.ts") });
+      const max = snap.exports.find((e) => e.name === "MAX_SIZE")!;
+      expect(max).toBeDefined();
+      expect(max.signature).toBe("number");
+    });
+  });
+
   describe("edge cases", () => {
     it("throws for a non-existent entry file", () => {
       expect(() => extract({ entry: fx("does-not-exist.ts") })).toThrow();

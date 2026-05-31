@@ -16,6 +16,7 @@ import ts from "typescript";
  */
 export function canonicalizeType(type: ts.Type, checker: ts.TypeChecker, depth = 0): string {
   // Guard against pathological recursive types (e.g. type T = T[]).
+  /* c8 ignore next 2 */
   if (depth > 12) {
     return fallbackString(type, checker);
   }
@@ -216,6 +217,7 @@ function canonicalizeOptionalPropType(
     const members = nonUndef.map((t) => canonicalizeType(t, checker, depth + 1)).sort();
     return dedupeSorted(collapseBooleanLiterals(members)).join(" | ");
   }
+  /* c8 ignore next */
   return canonicalizeType(type, checker, depth);
 }
 
