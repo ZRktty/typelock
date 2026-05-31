@@ -1,6 +1,12 @@
 # typelock
 
+[![CI](https://github.com/ZRktty/typelock/actions/workflows/ci.yml/badge.svg)](https://github.com/ZRktty/typelock/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/ZRktty/typelock/branch/main/graph/badge.svg)](https://codecov.io/gh/ZRktty/typelock)
+[![npm](https://img.shields.io/npm/v/@zrktty/typelock)](https://www.npmjs.com/package/@zrktty/typelock)
+
 > Lock your TypeScript API. Ship with confidence.
+
+**Built for library authors.** If other projects install your package and import your TypeScript types, typelock protects them. If your project is a backend application whose contract is an HTTP interface rather than published types, this probably isn't the right tool — though it works fine for shared `@company/types` packages used for frontend/backend type sharing.
 
 `typelock` creates snapshots of your TypeScript public type surface — the way Jest snapshots catch accidental value changes — commits them as a diffable baseline, and fails CI when the surface changes unexpectedly.
 
@@ -82,7 +88,7 @@ To get there, typelock normalizes at the type-object level (not on rendered stri
 
 ## Known limitations (MVP)
 
-This is an early MVP. The following are out of scope for now: class static members, variance analysis at the parameter level (contravariant inputs vs covariant outputs), a `--check-semver` flag that validates against your `package.json` version bump, multi-entry-point / monorepo support, and a GitHub Action wrapper.
+This is an early MVP. The following are out of scope for now: class static members, full variance analysis at the parameter level (contravariant inputs vs covariant outputs — parameter type widening is flagged as breaking conservatively), a `--check-semver` flag that validates against your `package.json` version bump, multi-entry-point / monorepo support, and a GitHub Action wrapper.
 
 ## License
 
