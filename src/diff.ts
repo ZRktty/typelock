@@ -63,8 +63,7 @@ export function diff(baseline: Snapshot, current: Snapshot): DiffResult {
   sortByName(changed);
 
   const breaking = [...removed, ...changed].filter((c) => c.breaking);
-  const hasChanges =
-    added.length + removed.length + changed.length > 0;
+  const hasChanges = added.length + removed.length + changed.length > 0;
 
   return {
     added,
@@ -185,7 +184,10 @@ function parseFunctionSig(sig: string): { params: string[]; returnType: string }
     else if (ch === ")" || ch === "]" || ch === "}" || ch === ">") {
       if (ch === ">" && i > 0 && trimmed[i - 1] === "=") continue; // part of `=>`, not a generic closer
       depth--;
-      if (depth === 0) { closeParen = i; break; }
+      if (depth === 0) {
+        closeParen = i;
+        break;
+      }
     }
   }
   if (closeParen === -1) return null;
@@ -196,7 +198,9 @@ function parseFunctionSig(sig: string): { params: string[]; returnType: string }
   const returnType = rest.slice(2).trim();
   const paramsStr = trimmed.slice(1, closeParen);
   const params = paramsStr
-    ? splitTopLevel(paramsStr, ",").map((p) => p.trim()).filter(Boolean)
+    ? splitTopLevel(paramsStr, ",")
+        .map((p) => p.trim())
+        .filter(Boolean)
     : [];
 
   return { params, returnType };

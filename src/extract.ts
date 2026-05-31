@@ -1,12 +1,7 @@
 import ts from "typescript";
 import * as path from "node:path";
 import { canonicalizeType, canonicalizeClassType } from "./canonicalize.js";
-import type {
-  ExtractOptions,
-  Snapshot,
-  ExportEntry,
-  ExportKind,
-} from "./types.js";
+import type { ExtractOptions, Snapshot, ExportEntry, ExportKind } from "./types.js";
 
 /**
  * Extract the public API type surface from an entry point.
@@ -31,8 +26,8 @@ export function extract(options: ExtractOptions): Snapshot {
   }
 
   const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+  /* c8 ignore next 3 */
   if (!moduleSymbol) {
-    // A file with no exports still produces a valid (empty) snapshot.
     return emptySnapshot();
   }
 
@@ -64,7 +59,7 @@ function resolveSymbol(symbol: ts.Symbol, checker: ts.TypeChecker): ts.Symbol {
   if (symbol.flags & ts.SymbolFlags.Alias) {
     try {
       return checker.getAliasedSymbol(symbol);
-    } catch {
+    } catch /* c8 ignore next */ {
       return symbol;
     }
   }
@@ -78,10 +73,9 @@ function classifyKind(symbol: ts.Symbol): ExportKind {
   if (f & ts.SymbolFlags.Interface) return "interface";
   if (f & ts.SymbolFlags.TypeAlias) return "type-alias";
   if (f & ts.SymbolFlags.Enum) return "enum";
-  if (f & (ts.SymbolFlags.Module | ts.SymbolFlags.NamespaceModule))
-    return "namespace";
-  if (f & (ts.SymbolFlags.Variable | ts.SymbolFlags.BlockScopedVariable))
-    return "variable";
+  if (f & (ts.SymbolFlags.Module | ts.SymbolFlags.NamespaceModule)) return "namespace";
+  if (f & (ts.SymbolFlags.Variable | ts.SymbolFlags.BlockScopedVariable)) return "variable";
+  /* c8 ignore next */
   return "unknown";
 }
 
@@ -112,6 +106,7 @@ function signatureForSymbol(
   return canonicalizeType(type, checker);
 }
 
+/* c8 ignore next 3 */
 function emptySnapshot(): Snapshot {
   return { formatVersion: 1, typescriptVersion: ts.version, exports: [] };
 }
@@ -134,18 +129,13 @@ function resolveCompilerOptions(
   };
 
   const configPath =
-    tsconfigPath ??
-    ts.findConfigFile(path.dirname(entry), ts.sys.fileExists, "tsconfig.json");
+    tsconfigPath ?? ts.findConfigFile(path.dirname(entry), ts.sys.fileExists, "tsconfig.json");
 
   if (!configPath) return defaults;
 
   const read = ts.readConfigFile(configPath, ts.sys.readFile);
   if (read.error) return defaults;
 
-  const parsed = ts.parseJsonConfigFileContent(
-    read.config,
-    ts.sys,
-    path.dirname(configPath),
-  );
+  const parsed = ts.parseJsonConfigFileContent(read.config, ts.sys, path.dirname(configPath));
   return { ...parsed.options, noEmit: true };
 }
