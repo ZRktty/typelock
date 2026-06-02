@@ -29,7 +29,9 @@ jobs:
 
       # npm OIDC trusted publishing needs npm >= 11.5.1; Node 22.14 ships 10.9.2.
       # @semantic-release/npm shells out to this `npm` to publish, so upgrade it.
-      - run: npm install -g npm@latest
+      # Pin to 11.x (not @latest): a future npm 12 would raise its required Node
+      # version and break this Node-22.14 job; 11.x stays compatible.
+      - run: npm install -g "npm@^11.5.1"
       - run: npm --version
 
       - run: pnpm install --frozen-lockfile
