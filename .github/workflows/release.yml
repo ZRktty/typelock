@@ -27,6 +27,11 @@ jobs:
           node-version: "22.14"  # semantic-release@25 requires ^22.14.0 || >=24.10.0
           cache: pnpm
 
+      # npm OIDC trusted publishing needs npm >= 11.5.1; Node 22.14 ships 10.9.2.
+      # @semantic-release/npm shells out to this `npm` to publish, so upgrade it.
+      - run: npm install -g npm@latest
+      - run: npm --version
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - run: pnpm test
